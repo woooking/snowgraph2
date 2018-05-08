@@ -1,0 +1,3 @@
+rootProject.name = 'snowgraph2'
+
+include 'server'

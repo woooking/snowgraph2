@@ -1,0 +1,5 @@
+
+apply plugin : 'java'
+apply plugin : 'application'
+
+mainClassName = 'edu.pku.sei.tsr.snowgraph.SnowGraph'
