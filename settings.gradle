@@ -1,3 +1,5 @@
 rootProject.name = 'snowgraph2'
 
+include 'api'
 include 'server'
+include 'java-code-extractor'

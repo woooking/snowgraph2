@@ -1,0 +1,4 @@
+plugins:
+  - path: edu.pku.sei.tsr.snowgraph.javacodeextractor.JavaCodeExtractor
+    args:
+     - /home/woooking/lab/nutch/sourcecode

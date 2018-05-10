@@ -1,0 +1,11 @@
+apply plugin: 'java'
+
+dependencies {
+    compile group: 'org.eclipse.tycho', name: 'org.eclipse.jdt.core', version: '3.14.0.v20171206-0802'
+    compile group: 'org.eclipse.core', name: 'org.eclipse.core.runtime', version: '3.7.0'
+    compile group: 'org.eclipse.core', name: 'org.eclipse.core.resources', version: '3.7.100'
+    compile group: 'commons-io', name: 'commons-io', version: '2.6'
+    compile group: 'org.apache.commons', name: 'commons-lang3', version: '3.7'
+    compile "org.neo4j:neo4j-ogm-core:3.1.0"
+    compile project(':api')
+}
