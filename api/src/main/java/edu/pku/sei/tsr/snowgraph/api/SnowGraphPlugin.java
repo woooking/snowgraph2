@@ -4,9 +4,13 @@ import java.util.List;
 
 public interface SnowGraphPlugin {
 
-    void preInit();
+    List<String> entityPackage();
 
-    void init(List<String> args);
+    void preInit(PreInitRegistry preInitRegistry);
+
+    void init(InitRegistry initRegistry);
+
+    void postInit(PostInitRegistry postInitRegistry);
 
     void run(SnowGraphContext context);
 }
