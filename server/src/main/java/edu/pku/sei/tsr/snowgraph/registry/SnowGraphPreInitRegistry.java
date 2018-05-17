@@ -2,7 +2,7 @@ package edu.pku.sei.tsr.snowgraph.registry;
 
 import edu.pku.sei.tsr.snowgraph.SnowGraphPluginInfo;
 import edu.pku.sei.tsr.snowgraph.api.PreInitRegistry;
-import edu.pku.sei.tsr.snowgraph.api.SnowGraphPlugin;
+import edu.pku.sei.tsr.snowgraph.api.plugin.SnowGraphPlugin;
 
 import java.util.Map;
 

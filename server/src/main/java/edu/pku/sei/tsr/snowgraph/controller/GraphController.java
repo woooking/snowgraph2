@@ -27,8 +27,8 @@ public class GraphController {
     }
 
     @PostMapping("/graphs")
-    public Mono<SnowGraph> build(String name, String destination, List<SnowGraphPluginConfig> pluginConfigs) {
-        return Mono.create(sink -> sink.success(new SnowGraph.Builder(name, destination, pluginConfigs).build()));
+    public Mono<SnowGraph> build(String name, String srcDir, String destination, List<SnowGraphPluginConfig> pluginConfigs) {
+        return Mono.create(sink -> sink.success(new SnowGraph.Builder(name, srcDir, destination, pluginConfigs).build()));
     }
 
 

@@ -1,0 +1,31 @@
+package edu.pku.sei.tsr.snowgraph;
+
+import edu.pku.sei.tsr.snowgraph.api.ChangeEvent;
+import org.junit.Test;
+import reactor.test.StepVerifier;
+
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Paths;
+
+import static org.junit.Assert.assertTrue;
+
+public class FileWatcherTest {
+    @Test
+    public void fileWatcherTest() throws IOException {
+        var fileWatcher = new FileWatcher("/home/woooking/lab/test");
+        File test1 = new File("/home/woooking/lab/test/test1");
+        File test2 = new File("/home/woooking/lab/test/test2");
+        assertTrue(test1.createNewFile());
+        assertTrue(test2.createNewFile());
+        assertTrue(test1.delete());
+        assertTrue(test2.delete());
+        StepVerifier.create(fileWatcher.getPublisher())
+            .expectNext(new ChangeEvent<>(ChangeEvent.Type.CREATED, Paths.get("/home/woooking/lab/test/test1")))
+            .expectNext(new ChangeEvent<>(ChangeEvent.Type.CREATED, Paths.get("/home/woooking/lab/test/test2")))
+            .expectNext(new ChangeEvent<>(ChangeEvent.Type.DELETED, Paths.get("/home/woooking/lab/test/test1")))
+            .expectNext(new ChangeEvent<>(ChangeEvent.Type.DELETED, Paths.get("/home/woooking/lab/test/test2")))
+            .thenCancel()
+            .verify();
+    }
+}

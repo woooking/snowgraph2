@@ -1,11 +1,13 @@
 package edu.pku.sei.tsr.snowgraph.neo4j;
 
+import com.google.common.collect.Lists;
 import edu.pku.sei.tsr.snowgraph.api.GraphEntity;
 import edu.pku.sei.tsr.snowgraph.api.Neo4jService;
 import org.neo4j.ogm.session.Session;
 import org.neo4j.ogm.session.SessionFactory;
 
 import java.util.Collection;
+import java.util.List;
 
 class GenericNeo4jService<T extends GraphEntity> implements Neo4jService<T> {
     private static final int DEPTH_LIST = 0;
@@ -16,6 +18,11 @@ class GenericNeo4jService<T extends GraphEntity> implements Neo4jService<T> {
     GenericNeo4jService(SessionFactory sessionFactory, Class<T> entityClass) {
         this.session = sessionFactory.openSession();
         this.entityClass = entityClass;
+    }
+
+    @Override
+    public long count() {
+        return session.count(entityClass, List.of());
     }
 
     @Override

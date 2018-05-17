@@ -3,6 +3,9 @@ package edu.pku.sei.tsr.snowgraph.api;
 import java.util.Collection;
 
 public interface Neo4jService<T> {
+
+    long count();
+
     Iterable<T> findAll();
 
     T find(Long id);
