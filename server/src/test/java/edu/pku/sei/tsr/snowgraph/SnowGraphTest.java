@@ -25,9 +25,25 @@ import static org.junit.Assert.assertEquals;
 @SpringBootTest
 public class SnowGraphTest {
     private static final String DB_LOCATION = "/home/woooking/lab/neo4j/databases/snow-graph";
+    private static final String NUTCH_LOCATION = "/home/woooking/lab/nutch";
 
     @Autowired
     private GraphController graphController;
+
+    @Test
+    public void dependencyGraphTest() {
+
+        var codeTokenizer = new SnowGraphPluginConfig();
+        codeTokenizer.setPath("edu.pku.sei.tsr.snowgraph.codetokenizer.CodeTokenizer");
+        codeTokenizer.setArgs(List.of());
+
+        var javaCodeExtractor = new SnowGraphPluginConfig();
+        javaCodeExtractor.setPath("edu.pku.sei.tsr.snowgraph.javacodeextractor.JavaCodeExtractor");
+        javaCodeExtractor.setArgs(List.of("sourcecode"));
+
+        var builder = new SnowGraph.Builder("nutch", NUTCH_LOCATION, DB_LOCATION, List.of(codeTokenizer, javaCodeExtractor));
+        builder.build();
+    }
 
     @Test
     public void javaCodeExtractorTest() throws IOException {
@@ -36,7 +52,7 @@ public class SnowGraphTest {
         javaCodeExtractor.setPath("edu.pku.sei.tsr.snowgraph.javacodeextractor.JavaCodeExtractor");
         javaCodeExtractor.setArgs(List.of("sourcecode"));
 
-        StepVerifier.create(graphController.build("nutch", "/home/woooking/lab/nutch", DB_LOCATION, Collections.singletonList(javaCodeExtractor)))
+        StepVerifier.create(graphController.build("nutch", NUTCH_LOCATION, DB_LOCATION, Collections.singletonList(javaCodeExtractor)))
             .assertNext(snowGraph -> {
                 assertEquals(snowGraph.getName(), "nutch");
                 var serviceFactory = new GenericNeo4jServiceFactory(snowGraph.getSessionFactory());

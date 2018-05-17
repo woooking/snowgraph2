@@ -1,6 +1,7 @@
 package edu.pku.sei.tsr.snowgraph;
 
 import edu.pku.sei.tsr.snowgraph.api.plugin.SnowGraphPlugin;
+import edu.pku.sei.tsr.snowgraph.exception.DependenceException;
 import edu.pku.sei.tsr.snowgraph.neo4j.Neo4jSessionFactory;
 import edu.pku.sei.tsr.snowgraph.registry.LifeCycleRegistry;
 import edu.pku.sei.tsr.snowgraph.registry.SnowGraphInitRegistry;
@@ -69,21 +70,19 @@ public class SnowGraph {
             this.name = name;
             this.srcDir = srcDir;
             this.destination = destination;
-            pluginConfigs.forEach(config -> this.plugins.put(config.getPath(), new SnowGraphPluginInfo(config)));
-        }
-
-        private Optional<?> forName(String className) {
-            try {
-                return Optional.of(Class.forName(className).getConstructor().newInstance());
-            } catch (ClassNotFoundException
-                | NoSuchMethodException
-                | InstantiationException
-                | IllegalAccessException
-                | InvocationTargetException e
-                ) {
-                e.printStackTrace();
+            for (SnowGraphPluginConfig pluginConfig : pluginConfigs) {
+                try {
+                    var instance = (SnowGraphPlugin) Class.forName(pluginConfig.getPath()).getConstructor().newInstance();
+                    this.plugins.put(pluginConfig.getPath(), new SnowGraphPluginInfo(pluginConfig, instance));
+                } catch (InstantiationException
+                    | InvocationTargetException
+                    | NoSuchMethodException
+                    | IllegalAccessException
+                    | ClassNotFoundException
+                    | ClassCastException e) {
+                    throw DependenceException.initializeError(pluginConfig.getPath());
+                }
             }
-            return Optional.empty();
         }
 
         private <T> void lifeCycle(Function<SnowGraphPlugin, Consumer<T>> func, LifeCycleRegistry<T> registry) {
@@ -91,16 +90,6 @@ public class SnowGraph {
                 .stream()
                 .map(SnowGraphPluginInfo::getInstance)
                 .forEach(plugin -> func.apply(plugin).accept(registry.viewFor(plugin)));
-        }
-
-        private void buildInstances() {
-            plugins.keySet().stream()
-                .map(this::forName)
-                .filter(Optional::isPresent)
-                .map(Optional::get)
-                .filter(SnowGraphPlugin.class::isInstance)
-                .map(SnowGraphPlugin.class::cast)
-                .forEach(plugin -> plugins.get(plugin.getClass().getName()).setInstance(plugin));
         }
 
         private void preInit() {
@@ -126,14 +115,14 @@ public class SnowGraph {
 
         @Override
         public SnowGraph build() {
-            buildInstances();
             preInit();
             init();
             postInit();
+            var dependencyGraph = new DependencyGraph(plugins.values());
             var sessionFactory = createSessionFactory();
             var snowGraph = new SnowGraph(name, srcDir, destination, plugins.values(), sessionFactory);
-            plugins.values().forEach(plugin -> {
-                logger.info("{} started.", plugin.getClass().getName());
+            dependencyGraph.getSortedPlugins().forEach(plugin -> {
+                logger.info("{} started.", plugin.getInstance().getClass().getName());
                 plugin.setContext(new BasicSnowGraphContext(snowGraph, sessionFactory, plugin));
                 long startTime = System.currentTimeMillis();
                 plugin.run();

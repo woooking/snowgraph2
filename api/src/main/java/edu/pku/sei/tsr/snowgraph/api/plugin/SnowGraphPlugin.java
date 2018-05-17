@@ -14,6 +14,8 @@ public interface SnowGraphPlugin {
 
     List<String> dependsOn();
 
+    List<String> optionalDependsOn();
+
     int order();
 
     List<String> entityPackage();

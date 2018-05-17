@@ -22,4 +22,5 @@ dependencies {
 
     runtime group: 'org.neo4j', name: 'neo4j-ogm-embedded-driver', version: '3.1.0'
     runtime project(':java-code-extractor')
+    runtime project(':code-tokenizer')
 }

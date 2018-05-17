@@ -19,6 +19,11 @@ public class JavaCodeExtractor implements SnowGraphPlugin {
     }
 
     @Override
+    public List<String> optionalDependsOn() {
+        return List.of();
+    }
+
+    @Override
     public int order() {
         return SnowGraphPlugin.EXTRACTOR;
     }

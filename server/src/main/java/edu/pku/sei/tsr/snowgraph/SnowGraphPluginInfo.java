@@ -13,21 +13,18 @@ import java.util.List;
 
 public class SnowGraphPluginInfo {
     private final SnowGraphPluginConfig config;
-    private SnowGraphPlugin instance;
+    private final SnowGraphPlugin instance;
     private final List<String> dataPaths = new ArrayList<>();
     private final List<String> watchPaths = new ArrayList<>();
     private BasicSnowGraphContext context;
 
-    public SnowGraphPluginInfo(SnowGraphPluginConfig config) {
+    public SnowGraphPluginInfo(SnowGraphPluginConfig config, SnowGraphPlugin instance) {
         this.config = config;
+        this.instance = instance;
     }
 
     public SnowGraphPlugin getInstance() {
         return instance;
-    }
-
-    public void setInstance(SnowGraphPlugin instance) {
-        this.instance = instance;
     }
 
     public void setContext(BasicSnowGraphContext context) {
