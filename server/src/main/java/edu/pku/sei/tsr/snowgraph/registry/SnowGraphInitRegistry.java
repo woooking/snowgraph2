@@ -8,9 +8,9 @@ import java.util.List;
 import java.util.Map;
 
 public class SnowGraphInitRegistry implements LifeCycleRegistry<InitRegistry> {
-    private final Map<String, SnowGraphPluginInfo> plugins;
+    private final Map<String, SnowGraphPluginInfo<?>> plugins;
 
-    public SnowGraphInitRegistry(Map<String, SnowGraphPluginInfo> plugins) {
+    public SnowGraphInitRegistry(Map<String, SnowGraphPluginInfo<?>> plugins) {
         this.plugins = plugins;
     }
 

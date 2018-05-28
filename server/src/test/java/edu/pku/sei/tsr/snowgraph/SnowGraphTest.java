@@ -1,13 +1,10 @@
 package edu.pku.sei.tsr.snowgraph;
 
-import com.google.common.collect.Lists;
-import edu.pku.sei.tsr.snowgraph.api.Neo4jServiceFactory;
 import edu.pku.sei.tsr.snowgraph.controller.GraphController;
 import edu.pku.sei.tsr.snowgraph.javacodeextractor.entity.JavaClassInfo;
 import edu.pku.sei.tsr.snowgraph.javacodeextractor.entity.JavaFieldInfo;
 import edu.pku.sei.tsr.snowgraph.javacodeextractor.entity.JavaMethodInfo;
-import edu.pku.sei.tsr.snowgraph.neo4j.GenericNeo4jServiceFactory;
-import edu.pku.sei.tsr.snowgraph.neo4j.Neo4jSessionFactory;
+import edu.pku.sei.tsr.snowgraph.neo4j.GenericNeo4JOGMServiceFactory;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -55,7 +52,7 @@ public class SnowGraphTest {
         StepVerifier.create(graphController.build("nutch", NUTCH_LOCATION, DB_LOCATION, Collections.singletonList(javaCodeExtractor)))
             .assertNext(snowGraph -> {
                 assertEquals(snowGraph.getName(), "nutch");
-                var serviceFactory = new GenericNeo4jServiceFactory(snowGraph.getSessionFactory());
+                var serviceFactory = new GenericNeo4JOGMServiceFactory(snowGraph.getSessionFactory());
                 var classInfoService = serviceFactory.createService(JavaClassInfo.class);
                 var methodInfoService = serviceFactory.createService(JavaMethodInfo.class);
                 var fieldInfoService = serviceFactory.createService(JavaFieldInfo.class);

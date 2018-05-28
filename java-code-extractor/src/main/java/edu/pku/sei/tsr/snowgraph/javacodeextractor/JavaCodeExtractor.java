@@ -1,6 +1,8 @@
 package edu.pku.sei.tsr.snowgraph.javacodeextractor;
 
 import edu.pku.sei.tsr.snowgraph.api.*;
+import edu.pku.sei.tsr.snowgraph.api.context.SnowGraphOGMContext;
+import edu.pku.sei.tsr.snowgraph.api.plugin.SnowGraphOGMPlugin;
 import edu.pku.sei.tsr.snowgraph.api.plugin.SnowGraphPlugin;
 
 import java.nio.file.Path;
@@ -9,7 +11,7 @@ import java.util.Collections;
 import java.util.List;
 
 @SuppressWarnings("unused")
-public class JavaCodeExtractor implements SnowGraphPlugin {
+public class JavaCodeExtractor implements SnowGraphOGMPlugin {
     private String srcPath;
     private JavaCodeGraphBuilder graphBuilder;
 
@@ -49,12 +51,13 @@ public class JavaCodeExtractor implements SnowGraphPlugin {
         postInitRegistry.registerDataPath(srcPath, true);
     }
 
-    public void run(SnowGraphContext context) {
+    @Override
+    public void run(SnowGraphOGMContext context) {
         graphBuilder.process(context.getNeo4jServiceFactory(), context.getData());
     }
 
     @Override
-    public void update(SnowGraphContext context, Collection<ChangeEvent<Path>> changeEvents) {
+    public void update(SnowGraphOGMContext context, Collection<ChangeEvent<Path>> changeEvents) {
         graphBuilder.update(context.getNeo4jServiceFactory(), changeEvents);
     }
 

@@ -2,7 +2,7 @@ package edu.pku.sei.tsr.snowgraph.api;
 
 import java.util.Collection;
 
-public interface Neo4jService<T> {
+public interface Neo4jOGMService<T> {
 
     long count();
 

@@ -1,6 +1,7 @@
 package edu.pku.sei.tsr.snowgraph;
 
 import edu.pku.sei.tsr.snowgraph.api.ChangeEvent;
+import edu.pku.sei.tsr.snowgraph.api.context.SnowGraphContext;
 import edu.pku.sei.tsr.snowgraph.api.plugin.SnowGraphPlugin;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
@@ -11,23 +12,29 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public class SnowGraphPluginInfo {
+public class SnowGraphPluginInfo<C extends SnowGraphContext> {
+    private final Class<? extends SnowGraphContext> contextClass;
     private final SnowGraphPluginConfig config;
-    private final SnowGraphPlugin instance;
+    private final SnowGraphPlugin<C> instance;
     private final List<String> dataPaths = new ArrayList<>();
     private final List<String> watchPaths = new ArrayList<>();
-    private BasicSnowGraphContext context;
+    private C context;
 
-    public SnowGraphPluginInfo(SnowGraphPluginConfig config, SnowGraphPlugin instance) {
+    public SnowGraphPluginInfo(Class<? extends SnowGraphContext> contextClass, SnowGraphPluginConfig config, SnowGraphPlugin<C> instance) {
+        this.contextClass = contextClass;
         this.config = config;
         this.instance = instance;
     }
 
-    public SnowGraphPlugin getInstance() {
+    public Class<? extends SnowGraphContext> getContextClass() {
+        return contextClass;
+    }
+
+    public SnowGraphPlugin<C> getInstance() {
         return instance;
     }
 
-    public void setContext(BasicSnowGraphContext context) {
+    public void setContext(C context) {
         this.context = context;
     }
 

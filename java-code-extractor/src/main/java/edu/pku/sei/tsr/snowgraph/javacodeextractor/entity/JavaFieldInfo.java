@@ -12,7 +12,7 @@ import java.util.Set;
 public class JavaFieldInfo implements GraphEntity {
     @Id
     @GeneratedValue
-    public Long id;
+    private Long id;
 
     @Override
     public Long getId() {

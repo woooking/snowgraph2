@@ -1,12 +1,13 @@
 package edu.pku.sei.tsr.snowgraph.api.plugin;
 
 import edu.pku.sei.tsr.snowgraph.api.*;
+import edu.pku.sei.tsr.snowgraph.api.context.SnowGraphContext;
 
 import java.nio.file.Path;
 import java.util.Collection;
 import java.util.List;
 
-public interface SnowGraphPlugin {
+public interface SnowGraphPlugin<C extends SnowGraphContext> {
     int EXTRACTOR = 1;
     int LINKER = 10;
     int MINER = 100;
@@ -18,15 +19,13 @@ public interface SnowGraphPlugin {
 
     int order();
 
-    List<String> entityPackage();
-
     void preInit(PreInitRegistry preInitRegistry);
 
     void init(InitRegistry initRegistry);
 
     void postInit(PostInitRegistry postInitRegistry);
 
-    void run(SnowGraphContext context);
+    void run(C context);
 
-    void update(SnowGraphContext context, Collection<ChangeEvent<Path>> changeEvents);
+    void update(C context, Collection<ChangeEvent<Path>> changeEvents);
 }

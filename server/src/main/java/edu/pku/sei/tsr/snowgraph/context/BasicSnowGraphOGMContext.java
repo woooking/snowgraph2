@@ -1,8 +1,10 @@
-package edu.pku.sei.tsr.snowgraph;
+package edu.pku.sei.tsr.snowgraph.context;
 
-import edu.pku.sei.tsr.snowgraph.api.Neo4jServiceFactory;
-import edu.pku.sei.tsr.snowgraph.api.SnowGraphContext;
-import edu.pku.sei.tsr.snowgraph.neo4j.GenericNeo4jServiceFactory;
+import edu.pku.sei.tsr.snowgraph.SnowGraph;
+import edu.pku.sei.tsr.snowgraph.SnowGraphPluginInfo;
+import edu.pku.sei.tsr.snowgraph.api.Neo4jOGMServiceFactory;
+import edu.pku.sei.tsr.snowgraph.api.context.SnowGraphOGMContext;
+import edu.pku.sei.tsr.snowgraph.neo4j.GenericNeo4JOGMServiceFactory;
 import org.apache.commons.io.FileUtils;
 import org.neo4j.ogm.session.SessionFactory;
 import org.slf4j.Logger;
@@ -14,21 +16,21 @@ import java.nio.file.Paths;
 import java.util.Collection;
 import java.util.stream.Collectors;
 
-public class BasicSnowGraphContext implements SnowGraphContext {
-    private final Neo4jServiceFactory serviceFactory;
-    private final SnowGraphPluginInfo pluginInfo;
+public class BasicSnowGraphOGMContext implements SnowGraphOGMContext {
+    private final Neo4jOGMServiceFactory serviceFactory;
+    private final SnowGraphPluginInfo<SnowGraphOGMContext> pluginInfo;
     private final Logger logger;
     private final SnowGraph snowGraph;
 
-    public BasicSnowGraphContext(SnowGraph snowGraph, SessionFactory sessionFactory, SnowGraphPluginInfo pluginInfo) {
+    public BasicSnowGraphOGMContext(SnowGraph snowGraph, SnowGraphPluginInfo<SnowGraphOGMContext> pluginInfo, SessionFactory sessionFactory) {
         this.snowGraph = snowGraph;
-        this.serviceFactory = new GenericNeo4jServiceFactory(sessionFactory);
+        this.serviceFactory = new GenericNeo4JOGMServiceFactory(sessionFactory);
         this.pluginInfo = pluginInfo;
         this.logger = LoggerFactory.getLogger(pluginInfo.getInstance().getClass());
     }
 
     @Override
-    public Neo4jServiceFactory getNeo4jServiceFactory() {
+    public Neo4jOGMServiceFactory getNeo4jServiceFactory() {
         return serviceFactory;
     }
 

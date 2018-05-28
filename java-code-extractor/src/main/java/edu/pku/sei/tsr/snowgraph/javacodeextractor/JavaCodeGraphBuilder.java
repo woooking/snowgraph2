@@ -1,7 +1,7 @@
 package edu.pku.sei.tsr.snowgraph.javacodeextractor;
 
 import edu.pku.sei.tsr.snowgraph.api.ChangeEvent;
-import edu.pku.sei.tsr.snowgraph.api.Neo4jServiceFactory;
+import edu.pku.sei.tsr.snowgraph.api.Neo4jOGMServiceFactory;
 import edu.pku.sei.tsr.snowgraph.javacodeextractor.entity.JavaProjectInfo;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.SuffixFileFilter;
@@ -54,11 +54,11 @@ public class JavaCodeGraphBuilder {
         javaProjectInfo = new JavaProjectInfo();
     }
 
-    void process(Neo4jServiceFactory serviceFactory, Collection<File> files) {
+    void process(Neo4jOGMServiceFactory serviceFactory, Collection<File> files) {
         onFilesCreated(serviceFactory, files);
     }
 
-    void update(Neo4jServiceFactory serviceFactory, Collection<ChangeEvent<Path>> changeEvents) {
+    void update(Neo4jOGMServiceFactory serviceFactory, Collection<ChangeEvent<Path>> changeEvents) {
         var events = changeEvents.stream()
             .collect(
                 groupingBy(ChangeEvent::getType,
@@ -68,7 +68,7 @@ public class JavaCodeGraphBuilder {
         onFilesCreated(serviceFactory, events.get(ChangeEvent.Type.CREATED));
     }
 
-    private void onFilesCreated(Neo4jServiceFactory serviceFactory, Collection<File> files) {
+    private void onFilesCreated(Neo4jOGMServiceFactory serviceFactory, Collection<File> files) {
         Collection<File> javaFiles = files.stream().filter(javaFileFilter::accept).collect(toList());
         srcPathSet.addAll(javaFiles.stream().map(File::getAbsolutePath).collect(toSet()));
         srcFolderSet.addAll(javaFiles.stream().map(File::getParentFile).map(File::getAbsolutePath).collect(toSet()));
@@ -76,7 +76,7 @@ public class JavaCodeGraphBuilder {
         run(serviceFactory, javaFiles);
     }
 
-    private void onFilesDeleted(Neo4jServiceFactory serviceFactory, Collection<File> files) {
+    private void onFilesDeleted(Neo4jOGMServiceFactory serviceFactory, Collection<File> files) {
 //        Collection<File> javaFiles = files.stream().filter(javaFileFilter::accept).collect(toList());
 //        srcPathSet.removeAll(javaFiles.stream().map(File::getAbsolutePath).collect(toSet()));
 //        srcFolderSet.removeAll(javaFiles.stream().map(File::getParentFile).map(File::getAbsolutePath).collect(toSet()));
@@ -84,7 +84,7 @@ public class JavaCodeGraphBuilder {
 //        run(serviceFactory, javaFiles);
     }
 
-    private void run(Neo4jServiceFactory serviceFactory, Collection<File> files) {
+    private void run(Neo4jOGMServiceFactory serviceFactory, Collection<File> files) {
         String[] todoFiles = new String[files.size()];
         files.stream().map(File::getAbsolutePath).collect(toSet()).toArray(todoFiles);
         String[] srcFolderPaths = new String[srcFolderSet.size()];

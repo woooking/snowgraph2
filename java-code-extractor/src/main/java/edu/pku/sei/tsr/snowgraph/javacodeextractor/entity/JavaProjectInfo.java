@@ -1,7 +1,7 @@
 package edu.pku.sei.tsr.snowgraph.javacodeextractor.entity;
 
 import com.google.common.collect.ImmutableMap;
-import edu.pku.sei.tsr.snowgraph.api.Neo4jServiceFactory;
+import edu.pku.sei.tsr.snowgraph.api.Neo4jOGMServiceFactory;
 import org.eclipse.jdt.core.dom.IMethodBinding;
 
 import java.util.*;
@@ -60,7 +60,7 @@ public class JavaProjectInfo {
         });
     }
 
-    public void buildRelationsAndSave(Neo4jServiceFactory serviceFactory) {
+    public void buildRelationsAndSave(Neo4jOGMServiceFactory serviceFactory) {
         buildRelations();
 
         var classInfoService = serviceFactory.createService(JavaClassInfo.class);

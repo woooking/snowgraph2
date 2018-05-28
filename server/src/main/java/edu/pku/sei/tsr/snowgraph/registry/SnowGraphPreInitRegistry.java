@@ -7,9 +7,9 @@ import edu.pku.sei.tsr.snowgraph.api.plugin.SnowGraphPlugin;
 import java.util.Map;
 
 public class SnowGraphPreInitRegistry implements LifeCycleRegistry<PreInitRegistry> {
-    private final Map<String, SnowGraphPluginInfo> plugins;
+    private final Map<String, SnowGraphPluginInfo<?>> plugins;
 
-    public SnowGraphPreInitRegistry(Map<String, SnowGraphPluginInfo> plugins) {
+    public SnowGraphPreInitRegistry(Map<String, SnowGraphPluginInfo<?>> plugins) {
         this.plugins = plugins;
     }
 
