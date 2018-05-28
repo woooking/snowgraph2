@@ -1,7 +1,6 @@
 package edu.pku.sei.tsr.snowgraph.javacodeextractor;
 
 import edu.pku.sei.tsr.snowgraph.api.ChangeEvent;
-import edu.pku.sei.tsr.snowgraph.api.Neo4jOGMServiceFactory;
 import edu.pku.sei.tsr.snowgraph.javacodeextractor.entity.JavaProjectInfo;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.SuffixFileFilter;
@@ -10,6 +9,10 @@ import org.eclipse.jdt.core.dom.AST;
 import org.eclipse.jdt.core.dom.ASTParser;
 import org.eclipse.jdt.core.dom.CompilationUnit;
 import org.eclipse.jdt.core.dom.FileASTRequestor;
+import org.neo4j.graphdb.GraphDatabaseService;
+import org.neo4j.graphdb.Label;
+import org.neo4j.graphdb.RelationshipType;
+import org.neo4j.unsafe.batchinsert.BatchInserter;
 
 import java.io.File;
 import java.io.FileFilter;
@@ -45,6 +48,37 @@ import static java.util.stream.Collectors.toSet;
  */
 
 public class JavaCodeGraphBuilder {
+    public static final Label CLASS = Label.label("Class");
+    public static final Label METHOD = Label.label("Method");
+    public static final Label FIELD = Label.label("Field");
+    public static final RelationshipType EXTEND = RelationshipType.withName("extend");
+    public static final RelationshipType IMPLEMENT = RelationshipType.withName("implement");
+    public static final RelationshipType HAVE_METHOD = RelationshipType.withName("haveMethod");
+    public static final RelationshipType PARAM_TYPE = RelationshipType.withName("paramType");
+    public static final RelationshipType RETURN_TYPE = RelationshipType.withName("returnType");
+    public static final RelationshipType THROW_TYPE = RelationshipType.withName("throwType");
+    public static final RelationshipType METHOD_CALL = RelationshipType.withName("methodCall");
+    public static final RelationshipType VARIABLE_TYPE = RelationshipType.withName("variableType");
+    public static final RelationshipType HAVE_FIELD = RelationshipType.withName("haveField");
+    public static final RelationshipType FIELD_TYPE = RelationshipType.withName("fieldType");
+    public static final RelationshipType FIELD_ACCESS = RelationshipType.withName("fieldAccess");
+    public static final String NAME = "name";
+    public static final String FULLNAME = "fullName";
+    public static final String IS_INTERFACE = "isInterface";
+    public static final String VISIBILITY = "visibility";
+    public static final String IS_ABSTRACT = "isAbstract";
+    public static final String IS_FINAL="isFinal";
+    public static final String COMMENT="comment";
+    public static final String CONTENT="content";
+    public static final String RETURN_TYPE_STR="returnType";
+    public static final String TYPE_STR="type";
+    public static final String PARAM_TYPE_STR="paramType";
+    public static final String IS_CONSTRUCTOR="isConstructor";
+    public static final String IS_STATIC="isStatic";
+    public static final String IS_SYNCHRONIZED="isSynchronized";
+    private String srcDir;
+    private BatchInserter inserter= null;
+
     private FileFilter javaFileFilter = new SuffixFileFilter(new String[]{".java"});
     private JavaProjectInfo javaProjectInfo;
     private Set<String> srcPathSet = new HashSet<>();
@@ -54,29 +88,29 @@ public class JavaCodeGraphBuilder {
         javaProjectInfo = new JavaProjectInfo();
     }
 
-    void process(Neo4jOGMServiceFactory serviceFactory, Collection<File> files) {
-        onFilesCreated(serviceFactory, files);
+    void process(GraphDatabaseService db, Collection<File> files) {
+        onFilesCreated(db, files);
     }
 
-    void update(Neo4jOGMServiceFactory serviceFactory, Collection<ChangeEvent<Path>> changeEvents) {
+    void update(GraphDatabaseService db, Collection<ChangeEvent<Path>> changeEvents) {
         var events = changeEvents.stream()
             .collect(
                 groupingBy(ChangeEvent::getType,
                     mapping(Function.<ChangeEvent<Path>>identity().andThen(ChangeEvent::getInstance).andThen(Path::toFile), toList())
                 )
             );
-        onFilesCreated(serviceFactory, events.get(ChangeEvent.Type.CREATED));
+        onFilesCreated(db, events.get(ChangeEvent.Type.CREATED));
     }
 
-    private void onFilesCreated(Neo4jOGMServiceFactory serviceFactory, Collection<File> files) {
+    private void onFilesCreated(GraphDatabaseService db, Collection<File> files) {
         Collection<File> javaFiles = files.stream().filter(javaFileFilter::accept).collect(toList());
         srcPathSet.addAll(javaFiles.stream().map(File::getAbsolutePath).collect(toSet()));
         srcFolderSet.addAll(javaFiles.stream().map(File::getParentFile).map(File::getAbsolutePath).collect(toSet()));
         NameResolver.setSrcPathSet(srcPathSet);
-        run(serviceFactory, javaFiles);
+        run(db, javaFiles);
     }
 
-    private void onFilesDeleted(Neo4jOGMServiceFactory serviceFactory, Collection<File> files) {
+    private void onFilesDeleted() {
 //        Collection<File> javaFiles = files.stream().filter(javaFileFilter::accept).collect(toList());
 //        srcPathSet.removeAll(javaFiles.stream().map(File::getAbsolutePath).collect(toSet()));
 //        srcFolderSet.removeAll(javaFiles.stream().map(File::getParentFile).map(File::getAbsolutePath).collect(toSet()));
@@ -84,7 +118,7 @@ public class JavaCodeGraphBuilder {
 //        run(serviceFactory, javaFiles);
     }
 
-    private void run(Neo4jOGMServiceFactory serviceFactory, Collection<File> files) {
+    private void run(GraphDatabaseService db, Collection<File> files) {
         String[] todoFiles = new String[files.size()];
         files.stream().map(File::getAbsolutePath).collect(toSet()).toArray(todoFiles);
         String[] srcFolderPaths = new String[srcFolderSet.size()];
@@ -110,7 +144,7 @@ public class JavaCodeGraphBuilder {
                 }
             }
         }, null);
-        javaProjectInfo.buildRelationsAndSave(serviceFactory);
+        javaProjectInfo.buildRelationsAndSave(db);
     }
 }
 

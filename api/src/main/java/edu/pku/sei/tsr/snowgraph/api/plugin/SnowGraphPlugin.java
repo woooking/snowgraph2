@@ -7,7 +7,7 @@ import java.nio.file.Path;
 import java.util.Collection;
 import java.util.List;
 
-public interface SnowGraphPlugin<C extends SnowGraphContext> {
+public interface SnowGraphPlugin {
     int EXTRACTOR = 1;
     int LINKER = 10;
     int MINER = 100;
@@ -25,7 +25,7 @@ public interface SnowGraphPlugin<C extends SnowGraphContext> {
 
     void postInit(PostInitRegistry postInitRegistry);
 
-    void run(C context);
+    void run(SnowGraphContext context);
 
-    void update(C context, Collection<ChangeEvent<Path>> changeEvents);
+    void update(SnowGraphContext context, Collection<ChangeEvent<Path>> changeEvents);
 }

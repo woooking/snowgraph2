@@ -12,30 +12,19 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public class SnowGraphPluginInfo<C extends SnowGraphContext> {
-    private final Class<? extends SnowGraphContext> contextClass;
+public class SnowGraphPluginInfo {
     private final SnowGraphPluginConfig config;
-    private final SnowGraphPlugin<C> instance;
+    private final SnowGraphPlugin instance;
     private final List<String> dataPaths = new ArrayList<>();
     private final List<String> watchPaths = new ArrayList<>();
-    private C context;
 
-    public SnowGraphPluginInfo(Class<? extends SnowGraphContext> contextClass, SnowGraphPluginConfig config, SnowGraphPlugin<C> instance) {
-        this.contextClass = contextClass;
+    public SnowGraphPluginInfo(SnowGraphPluginConfig config, SnowGraphPlugin instance) {
         this.config = config;
         this.instance = instance;
     }
 
-    public Class<? extends SnowGraphContext> getContextClass() {
-        return contextClass;
-    }
-
-    public SnowGraphPlugin<C> getInstance() {
+    public SnowGraphPlugin getInstance() {
         return instance;
-    }
-
-    public void setContext(C context) {
-        this.context = context;
     }
 
     public SnowGraphPluginConfig getConfig() {
@@ -55,7 +44,7 @@ public class SnowGraphPluginInfo<C extends SnowGraphContext> {
         return watchPaths;
     }
 
-    public void run() {
+    public void run(SnowGraphContext context) {
         instance.run(context);
     }
 
@@ -68,7 +57,7 @@ public class SnowGraphPluginInfo<C extends SnowGraphContext> {
 
             @Override
             protected void hookOnNext(ChangeEvent<Path> value) {
-                instance.update(context, Collections.singleton(value));
+//                instance.update(context, Collections.singleton(value));
                 request(1);
             }
         };

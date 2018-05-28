@@ -7,14 +7,14 @@ import java.util.*;
 
 class DependencyGraph {
     private Map<String, PluginNode> nodes = new HashMap<>();
-    private List<SnowGraphPluginInfo<?>> sortedPlugins = new ArrayList<>();
+    private List<SnowGraphPluginInfo> sortedPlugins = new ArrayList<>();
 
     private class PluginNode {
         private int indgree = 0;
         private List<PluginNode> outNodes = new ArrayList<>();
-        private SnowGraphPluginInfo<?> pluginInfo;
+        private SnowGraphPluginInfo pluginInfo;
 
-        private PluginNode(SnowGraphPluginInfo<?> pluginInfo) {
+        private PluginNode(SnowGraphPluginInfo pluginInfo) {
             this.pluginInfo = pluginInfo;
         }
 
@@ -28,17 +28,17 @@ class DependencyGraph {
         }
     }
 
-    DependencyGraph(Collection<SnowGraphPluginInfo<?>> plugins) {
+    DependencyGraph(Collection<SnowGraphPluginInfo> plugins) {
         plugins.forEach(plugin -> nodes.put(plugin.getInstance().getClass().getName(), new PluginNode(plugin)));
         plugins.forEach(this::resolveDependency);
         topologicalSort();
     }
 
-    List<SnowGraphPluginInfo<?>> getSortedPlugins() {
+    List<SnowGraphPluginInfo> getSortedPlugins() {
         return sortedPlugins;
     }
 
-    private void resolveDependency(SnowGraphPluginInfo<?> plugin) {
+    private void resolveDependency(SnowGraphPluginInfo plugin) {
         plugin.getInstance().dependsOn().forEach(dependency -> addDependency(plugin.getInstance(), dependency, false));
         plugin.getInstance().optionalDependsOn().forEach(dependency -> addDependency(plugin.getInstance(), dependency, true));
     }

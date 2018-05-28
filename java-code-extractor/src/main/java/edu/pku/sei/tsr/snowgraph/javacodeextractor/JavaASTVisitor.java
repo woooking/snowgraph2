@@ -5,6 +5,7 @@ import edu.pku.sei.tsr.snowgraph.javacodeextractor.entity.JavaFieldInfo;
 import edu.pku.sei.tsr.snowgraph.javacodeextractor.entity.JavaMethodInfo;
 import edu.pku.sei.tsr.snowgraph.javacodeextractor.entity.JavaProjectInfo;
 import org.eclipse.jdt.core.dom.*;
+import org.neo4j.graphdb.GraphDatabaseService;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -14,8 +15,8 @@ import java.util.stream.Collectors;
 
 public class JavaASTVisitor extends ASTVisitor {
 
-    private JavaProjectInfo javaProjectInfo;
-    private String sourceContent;
+    private final JavaProjectInfo javaProjectInfo;
+    private final String sourceContent;
 
     public JavaASTVisitor(JavaProjectInfo javaProjectInfo, String sourceContent) {
         this.javaProjectInfo = javaProjectInfo;

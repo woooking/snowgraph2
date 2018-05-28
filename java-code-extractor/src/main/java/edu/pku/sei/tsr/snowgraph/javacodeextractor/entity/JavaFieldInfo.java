@@ -1,23 +1,11 @@
 package edu.pku.sei.tsr.snowgraph.javacodeextractor.entity;
 
-import edu.pku.sei.tsr.snowgraph.api.GraphEntity;
+import com.google.common.base.Preconditions;
 import edu.pku.sei.tsr.snowgraph.javacodeextractor.JavaCodeGraphBuilder;
-import org.neo4j.ogm.annotation.*;
+import org.neo4j.graphdb.GraphDatabaseService;
+import org.neo4j.graphdb.Node;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
-
-@NodeEntity(label = "Field")
-public class JavaFieldInfo implements GraphEntity {
-    @Id
-    @GeneratedValue
-    private Long id;
-
-    @Override
-    public Long getId() {
-        return id;
-    }
+public class JavaFieldInfo {
 
     private String name;
     private String fullName;
@@ -27,53 +15,43 @@ public class JavaFieldInfo implements GraphEntity {
     private boolean isFinal;
     private String comment;
 
-    @Transient
     private String belongTo;
-    @Relationship(type = "belongTo")
-    private Set<JavaClassInfo> belongToSet;
-    @Transient
     private String fullType;
-    @Relationship(type = "fieldType", direction = Relationship.INCOMING)
-    private Set<JavaClassInfo> fullTypeSet;
+    private Node node;
 
     public JavaFieldInfo(String name, String fullName, String type, String visibility, boolean isStatic, boolean isFinal, String comment, String belongTo, String fullType) {
+        Preconditions.checkArgument(name != null);
         this.name = name;
+        Preconditions.checkArgument(fullName != null);
         this.fullName = fullName;
+        Preconditions.checkArgument(type != null);
         this.type = type;
+        Preconditions.checkArgument(visibility != null);
         this.visibility = visibility;
         this.isStatic = isStatic;
         this.isFinal = isFinal;
+        Preconditions.checkArgument(comment != null);
         this.comment = comment;
+        Preconditions.checkArgument(belongTo != null);
         this.belongTo = belongTo;
+        Preconditions.checkArgument(fullType != null);
         this.fullType = fullType;
     }
 
-    public String getName() {
-        return name;
+    private Node createNode(GraphDatabaseService db) {
+        Node node = db.createNode(JavaCodeGraphBuilder.FIELD);
+        node.setProperty(JavaCodeGraphBuilder.NAME, name);
+        node.setProperty(JavaCodeGraphBuilder.FULLNAME, fullName);
+        node.setProperty(JavaCodeGraphBuilder.TYPE_STR, type);
+        node.setProperty(JavaCodeGraphBuilder.VISIBILITY, visibility);
+        node.setProperty(JavaCodeGraphBuilder.IS_STATIC, isStatic);
+        node.setProperty(JavaCodeGraphBuilder.IS_FINAL, isFinal);
+        node.setProperty(JavaCodeGraphBuilder.COMMENT, comment);
+        return node;
     }
 
     public String getFullName() {
         return fullName;
-    }
-
-    public String getType() {
-        return type;
-    }
-
-    public String getVisibility() {
-        return visibility;
-    }
-
-    public boolean isStatic() {
-        return isStatic;
-    }
-
-    public boolean isFinal() {
-        return isFinal;
-    }
-
-    public String getComment() {
-        return comment;
     }
 
     public String getBelongTo() {
@@ -84,23 +62,14 @@ public class JavaFieldInfo implements GraphEntity {
         return fullType;
     }
 
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public Set<JavaClassInfo> getBelongToSet() {
-        return belongToSet;
-    }
-
-    public void setBelongToSet(Set<JavaClassInfo> belongToSet) {
-        this.belongToSet = belongToSet;
-    }
-
-    public Set<JavaClassInfo> getFullTypeSet() {
-        return fullTypeSet;
-    }
-
-    public void setFullTypeSet(Set<JavaClassInfo> fullTypeSet) {
-        this.fullTypeSet = fullTypeSet;
+    public Node getNode(GraphDatabaseService db) {
+        if (node == null) {
+            synchronized (this) {
+                if (node == null) {
+                    node = createNode(db);
+                }
+            }
+        }
+        return node;
     }
 }

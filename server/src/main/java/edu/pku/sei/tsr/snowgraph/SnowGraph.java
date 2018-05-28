@@ -1,22 +1,15 @@
 package edu.pku.sei.tsr.snowgraph;
 
 import edu.pku.sei.tsr.snowgraph.api.context.SnowGraphContext;
-import edu.pku.sei.tsr.snowgraph.api.context.SnowGraphDBContext;
-import edu.pku.sei.tsr.snowgraph.api.context.SnowGraphOGMContext;
-import edu.pku.sei.tsr.snowgraph.api.plugin.SnowGraphDBPlugin;
-import edu.pku.sei.tsr.snowgraph.api.plugin.SnowGraphOGMPlugin;
 import edu.pku.sei.tsr.snowgraph.api.plugin.SnowGraphPlugin;
-import edu.pku.sei.tsr.snowgraph.context.BasicSnowGraphDBContext;
-import edu.pku.sei.tsr.snowgraph.context.BasicSnowGraphOGMContext;
+import edu.pku.sei.tsr.snowgraph.context.BasicSnowGraphContext;
 import edu.pku.sei.tsr.snowgraph.exception.DependenceException;
-import edu.pku.sei.tsr.snowgraph.neo4j.Neo4jSessionFactory;
 import edu.pku.sei.tsr.snowgraph.registry.LifeCycleRegistry;
 import edu.pku.sei.tsr.snowgraph.registry.SnowGraphInitRegistry;
 import edu.pku.sei.tsr.snowgraph.registry.SnowGraphPostInitRegistry;
 import edu.pku.sei.tsr.snowgraph.registry.SnowGraphPreInitRegistry;
-import org.neo4j.graphdb.GraphDatabaseService;
+import org.neo4j.graphdb.factory.GraphDatabaseBuilder;
 import org.neo4j.graphdb.factory.GraphDatabaseFactory;
-import org.neo4j.ogm.session.SessionFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import reactor.core.scheduler.Schedulers;
@@ -26,7 +19,6 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.*;
 import java.util.function.Consumer;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 
 public class SnowGraph {
     private final String name;
@@ -34,17 +26,17 @@ public class SnowGraph {
     private final String destination;
     private final DependencyGraph dependencyGraph;
     private final FileWatcher fileWatcher;
-    private final SessionFactory sessionFactory;
     private final SnowGraphUpdater updater;
+    private final GraphDatabaseBuilder databaseBuilder;
 
-    private SnowGraph(String name, String dataDir, String destination, DependencyGraph dependencyGraph, SessionFactory sessionFactory) {
+    private SnowGraph(String name, String dataDir, String destination, DependencyGraph dependencyGraph) {
         this.name = name;
         this.dataDir = dataDir;
         this.destination = destination;
         this.dependencyGraph = dependencyGraph;
         this.fileWatcher = new FileWatcher(dataDir);
-        this.sessionFactory = sessionFactory;
         this.updater = new SnowGraphUpdater();
+        this.databaseBuilder = new GraphDatabaseFactory().newEmbeddedDatabaseBuilder(new File(destination));
     }
 
     String getName() {
@@ -55,8 +47,8 @@ public class SnowGraph {
         return dataDir;
     }
 
-    public SessionFactory getSessionFactory() {
-        return sessionFactory;
+    public GraphDatabaseBuilder getDatabaseBuilder() {
+        return databaseBuilder;
     }
 
     private void watchFile() {
@@ -70,7 +62,7 @@ public class SnowGraph {
         private final String name;
         private final String srcDir;
         private final String destination;
-        private final Map<String, SnowGraphPluginInfo<?>> plugins = new HashMap<>();
+        private final Map<String, SnowGraphPluginInfo> plugins = new HashMap<>();
 
         private final SnowGraphPreInitRegistry preInitRegistry = new SnowGraphPreInitRegistry(plugins);
         private final SnowGraphInitRegistry initRegistry = new SnowGraphInitRegistry(plugins);
@@ -83,13 +75,7 @@ public class SnowGraph {
             for (SnowGraphPluginConfig pluginConfig : pluginConfigs) {
                 try {
                     var instance = (SnowGraphPlugin) Class.forName(pluginConfig.getPath()).getConstructor().newInstance();
-                    if (instance instanceof SnowGraphOGMPlugin) {
-                        var plugin = (SnowGraphOGMPlugin) instance;
-                        this.plugins.put(pluginConfig.getPath(), new SnowGraphPluginInfo<>(SnowGraphOGMContext.class, pluginConfig, plugin));
-                    } else if (instance instanceof SnowGraphDBPlugin) {
-                        var plugin = (SnowGraphDBPlugin) instance;
-                        this.plugins.put(pluginConfig.getPath(), new SnowGraphPluginInfo<>(SnowGraphDBContext.class, pluginConfig, plugin));
-                    }
+                    this.plugins.put(pluginConfig.getPath(), new SnowGraphPluginInfo(pluginConfig, instance));
                 } catch (InstantiationException
                     | InvocationTargetException
                     | NoSuchMethodException
@@ -120,50 +106,24 @@ public class SnowGraph {
             lifeCycle(plugin -> plugin::postInit, postInitRegistry);
         }
 
-        private SessionFactory createSessionFactory() {
-            List<String> entityPackages = plugins.values().stream()
-                .map(SnowGraphPluginInfo::getInstance)
-                .filter(SnowGraphOGMPlugin.class::isInstance)
-                .map(SnowGraphOGMPlugin.class::cast)
-                .map(SnowGraphOGMPlugin::entityPackage)
-                .flatMap(List::stream)
-                .collect(Collectors.toList());
-            return Neo4jSessionFactory.createSessionFactory(destination, entityPackages);
-        }
-
         @Override
         public SnowGraph build() {
             preInit();
             init();
             postInit();
             var dependencyGraph = new DependencyGraph(plugins.values());
-            var sessionFactory = createSessionFactory();
-            var snowGraph = new SnowGraph(name, srcDir, destination, dependencyGraph, sessionFactory);
-            var databaseBuilder = new GraphDatabaseFactory().newEmbeddedDatabaseBuilder(new File(destination));
-            plugins.values().forEach(plugin -> {
-                if (plugin.getContextClass().equals(SnowGraphOGMContext.class)) {
-                    var p = castPluginInfo(plugin, SnowGraphOGMContext.class);
-                    p.setContext(new BasicSnowGraphOGMContext(snowGraph, p, sessionFactory));
-                } else if (plugin.getContextClass().equals(SnowGraphDBContext.class)) {
-                    var p = castPluginInfo(plugin, SnowGraphDBContext.class);
-                    p.setContext(new BasicSnowGraphDBContext(snowGraph, p, databaseBuilder));
-                }
-            });
+            var snowGraph = new SnowGraph(name, srcDir, destination, dependencyGraph);
             dependencyGraph.getSortedPlugins().forEach(plugin -> {
                 logger.info("{} started.", plugin.getInstance().getClass().getName());
                 long startTime = System.currentTimeMillis();
-                plugin.run();
+                try(var context = new BasicSnowGraphContext(snowGraph, plugin, snowGraph.getDatabaseBuilder())) {
+                    plugin.run(context);
+                }
                 long endTime = System.currentTimeMillis();
                 logger.info("{} uses {} s.", plugin.getClass().getName(), (endTime - startTime) / 1000);
             });
             snowGraph.watchFile();
             return snowGraph;
-        }
-
-        @SuppressWarnings("unchecked")
-        private <C extends SnowGraphContext> SnowGraphPluginInfo<C> castPluginInfo(SnowGraphPluginInfo<?> pluginInfo, Class<C> clazz) {
-            assert pluginInfo.getContextClass().equals(clazz);
-            return (SnowGraphPluginInfo<C>) pluginInfo;
         }
     }
 }

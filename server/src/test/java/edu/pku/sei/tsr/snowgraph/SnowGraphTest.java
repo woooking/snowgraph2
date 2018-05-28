@@ -1,10 +1,7 @@
 package edu.pku.sei.tsr.snowgraph;
 
 import edu.pku.sei.tsr.snowgraph.controller.GraphController;
-import edu.pku.sei.tsr.snowgraph.javacodeextractor.entity.JavaClassInfo;
-import edu.pku.sei.tsr.snowgraph.javacodeextractor.entity.JavaFieldInfo;
-import edu.pku.sei.tsr.snowgraph.javacodeextractor.entity.JavaMethodInfo;
-import edu.pku.sei.tsr.snowgraph.neo4j.GenericNeo4JOGMServiceFactory;
+import edu.pku.sei.tsr.snowgraph.javacodeextractor.JavaCodeGraphBuilder;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -52,13 +49,13 @@ public class SnowGraphTest {
         StepVerifier.create(graphController.build("nutch", NUTCH_LOCATION, DB_LOCATION, Collections.singletonList(javaCodeExtractor)))
             .assertNext(snowGraph -> {
                 assertEquals(snowGraph.getName(), "nutch");
-                var serviceFactory = new GenericNeo4JOGMServiceFactory(snowGraph.getSessionFactory());
-                var classInfoService = serviceFactory.createService(JavaClassInfo.class);
-                var methodInfoService = serviceFactory.createService(JavaMethodInfo.class);
-                var fieldInfoService = serviceFactory.createService(JavaFieldInfo.class);
-                assertEquals(classInfoService.count(), 408);
-                assertEquals(methodInfoService.count(), 2377);
-                assertEquals(fieldInfoService.count(), 1486);
+                var db = snowGraph.getDatabaseBuilder().newGraphDatabase();
+                try(var tx = db.beginTx()) {
+                    assertEquals(db.findNodes(JavaCodeGraphBuilder.CLASS).stream().count(), 408);
+                    assertEquals(db.findNodes(JavaCodeGraphBuilder.METHOD).stream().count(), 2377);
+                    assertEquals(db.findNodes(JavaCodeGraphBuilder.FIELD).stream().count(), 1486);
+                    tx.success();
+                }
             })
             .expectComplete()
             .verify();

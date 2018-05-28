@@ -1,17 +1,15 @@
 package edu.pku.sei.tsr.snowgraph.javacodeextractor;
 
 import edu.pku.sei.tsr.snowgraph.api.*;
-import edu.pku.sei.tsr.snowgraph.api.context.SnowGraphOGMContext;
-import edu.pku.sei.tsr.snowgraph.api.plugin.SnowGraphOGMPlugin;
+import edu.pku.sei.tsr.snowgraph.api.context.SnowGraphContext;
 import edu.pku.sei.tsr.snowgraph.api.plugin.SnowGraphPlugin;
 
 import java.nio.file.Path;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 
 @SuppressWarnings("unused")
-public class JavaCodeExtractor implements SnowGraphOGMPlugin {
+public class JavaCodeExtractor implements SnowGraphPlugin {
     private String srcPath;
     private JavaCodeGraphBuilder graphBuilder;
 
@@ -31,11 +29,6 @@ public class JavaCodeExtractor implements SnowGraphOGMPlugin {
     }
 
     @Override
-    public List<String> entityPackage() {
-        return Collections.singletonList("edu.pku.sei.tsr.snowgraph.javacodeextractor.entity");
-    }
-
-    @Override
     public void preInit(PreInitRegistry preInitRegistry) {
 
     }
@@ -52,13 +45,13 @@ public class JavaCodeExtractor implements SnowGraphOGMPlugin {
     }
 
     @Override
-    public void run(SnowGraphOGMContext context) {
-        graphBuilder.process(context.getNeo4jServiceFactory(), context.getData());
+    public void run(SnowGraphContext context) {
+        graphBuilder.process(context.getDatabaseService(), context.getData());
     }
 
     @Override
-    public void update(SnowGraphOGMContext context, Collection<ChangeEvent<Path>> changeEvents) {
-        graphBuilder.update(context.getNeo4jServiceFactory(), changeEvents);
+    public void update(SnowGraphContext context, Collection<ChangeEvent<Path>> changeEvents) {
+        graphBuilder.update(context.getDatabaseService(), changeEvents);
     }
 
 }

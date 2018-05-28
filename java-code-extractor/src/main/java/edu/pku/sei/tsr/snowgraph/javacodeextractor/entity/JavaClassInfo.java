@@ -1,83 +1,61 @@
 package edu.pku.sei.tsr.snowgraph.javacodeextractor.entity;
 
-import edu.pku.sei.tsr.snowgraph.api.GraphEntity;
-import org.neo4j.ogm.annotation.*;
+import com.google.common.base.Preconditions;
+import edu.pku.sei.tsr.snowgraph.javacodeextractor.JavaCodeGraphBuilder;
+import org.neo4j.graphdb.GraphDatabaseService;
+import org.neo4j.graphdb.Node;
 
-import java.util.Set;
+public class JavaClassInfo {
 
-@NodeEntity(label = "Class")
-public class JavaClassInfo implements GraphEntity {
-    @Id
-    @GeneratedValue
-    private Long id;
+    private final String name;
+    private final String fullName;
+    private final boolean isInterface;
+    private final String visibility;
+    private final boolean isAbstract;
+    private final boolean isFinal;
+    private final String comment;
+    private final String content;
 
-    @Override
-    public Long getId() {
-        return id;
-    }
-
-    private String name;
-    private String fullName;
-    private boolean isInterface;
-    private String visibility;
-    private boolean isAbstract;
-    private boolean isFinal;
-    private String comment;
-    private String content;
-
-    @Transient
     private final String superClassType;
-    @Relationship(type = "extend")
-    private Set<JavaClassInfo> superClasses;
-
-    @Transient
     private final String superInterfaceTypes;
-    @Relationship(type = "implement")
-    private Set<JavaClassInfo> superInterfaces;
+    private Node node;
 
     public JavaClassInfo(String name, String fullName, boolean isInterface, String visibility, boolean isAbstract, boolean isFinal, String comment, String content, String superClassType, String superInterfaceTypes) {
+        Preconditions.checkArgument(name != null);
         this.name = name;
+        Preconditions.checkArgument(fullName != null);
         this.fullName = fullName;
         this.isInterface = isInterface;
+        Preconditions.checkArgument(visibility != null);
         this.visibility = visibility;
         this.isAbstract = isAbstract;
         this.isFinal = isFinal;
+        Preconditions.checkArgument(comment != null);
         this.comment = comment;
+        Preconditions.checkArgument(content != null);
         this.content = content;
+        Preconditions.checkArgument(superClassType != null);
         this.superClassType = superClassType;
+        Preconditions.checkArgument(superInterfaceTypes != null);
         this.superInterfaceTypes = superInterfaceTypes;
     }
 
-    public String getName() {
-        return name;
+    private Node createNode(GraphDatabaseService db) {
+        Node node = db.createNode(JavaCodeGraphBuilder.CLASS);
+        node.setProperty(JavaCodeGraphBuilder.NAME, name);
+        node.setProperty(JavaCodeGraphBuilder.NAME, name);
+        node.setProperty(JavaCodeGraphBuilder.FULLNAME, fullName);
+        node.setProperty(JavaCodeGraphBuilder.IS_INTERFACE, isInterface);
+        node.setProperty(JavaCodeGraphBuilder.VISIBILITY, visibility);
+        node.setProperty(JavaCodeGraphBuilder.IS_ABSTRACT, isAbstract);
+        node.setProperty(JavaCodeGraphBuilder.IS_FINAL, isFinal);
+        node.setProperty(JavaCodeGraphBuilder.COMMENT, comment);
+        node.setProperty(JavaCodeGraphBuilder.CONTENT, content);
+        return node;
     }
 
     public String getFullName() {
         return fullName;
-    }
-
-    public boolean isInterface() {
-        return isInterface;
-    }
-
-    public String getVisibility() {
-        return visibility;
-    }
-
-    public boolean isAbstract() {
-        return isAbstract;
-    }
-
-    public boolean isFinal() {
-        return isFinal;
-    }
-
-    public String getComment() {
-        return comment;
-    }
-
-    public String getContent() {
-        return content;
     }
 
     public String getSuperClassType() {
@@ -88,19 +66,14 @@ public class JavaClassInfo implements GraphEntity {
         return superInterfaceTypes;
     }
 
-    public Set<JavaClassInfo> getSuperClasses() {
-        return superClasses;
-    }
-
-    public void setSuperClasses(Set<JavaClassInfo> superClasses) {
-        this.superClasses = superClasses;
-    }
-
-    public Set<JavaClassInfo> getSuperInterfaces() {
-        return superInterfaces;
-    }
-
-    public void setSuperInterfaces(Set<JavaClassInfo> superInterfaces) {
-        this.superInterfaces = superInterfaces;
+    public Node getNode(GraphDatabaseService db) {
+        if (node == null) {
+            synchronized (this) {
+                if (node == null) {
+                    node = createNode(db);
+                }
+            }
+        }
+        return node;
     }
 }

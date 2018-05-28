@@ -1,21 +1,15 @@
 package edu.pku.sei.tsr.snowgraph.javacodeextractor.entity;
 
-import edu.pku.sei.tsr.snowgraph.api.GraphEntity;
+import com.google.common.base.Preconditions;
+import edu.pku.sei.tsr.snowgraph.javacodeextractor.JavaCodeGraphBuilder;
 import org.eclipse.jdt.core.dom.IMethodBinding;
-import org.neo4j.ogm.annotation.*;
+import org.neo4j.graphdb.GraphDatabaseService;
+import org.neo4j.graphdb.Node;
+import org.neo4j.unsafe.batchinsert.BatchInserter;
 
 import java.util.Set;
 
-@NodeEntity(label = "Method")
-public class JavaMethodInfo implements GraphEntity {
-    @Id
-    @GeneratedValue
-    public Long id;
-
-    @Override
-    public Long getId() {
-        return id;
-    }
+public class JavaMethodInfo {
 
     private String name;
     private String fullName;
@@ -28,120 +22,81 @@ public class JavaMethodInfo implements GraphEntity {
     private boolean isSynchronized;
     private String content;
     private String comment;
-    @Property(name = "paramType")
     private String params;
 
-    @Transient
     private IMethodBinding methodBinding;
-
-    @Transient
-    private String belongTo;
-    @Relationship(type = "belongTo", direction = Relationship.INCOMING)
-    private Set<JavaClassInfo> belongToSet;
-    @Transient
-    private String fullParams;
-    @Relationship(type = "paramType")
-    private Set<JavaClassInfo> fullParamSet;
-    @Transient
     private String fullReturnType;
-    @Relationship(type = "returnType")
-    private Set<JavaClassInfo> fullReturnTypeSet;
-    @Transient
-    private String throwTypes;
-    @Relationship(type = "throwType")
-    private Set<JavaClassInfo> throwTypeSet;
-    @Transient
+    private String belongTo;
+    private String fullParams;
     private String fullVariables;
-    @Relationship(type = "variableType")
-    private Set<JavaClassInfo> fullVariableSet;
-    @Transient
     private Set<IMethodBinding> methodCalls;
-    @Relationship(type = "methodCall")
-    private Set<JavaMethodInfo> methodCallSet;
-    @Transient
     private String fieldAccesses;
-    @Relationship(type = "fieldAccess")
-    private Set<JavaFieldInfo> fieldAccessSet;
+    private String throwTypes;
+    private Node node;
 
     public JavaMethodInfo(String name, String fullName, String returnType, String visibility, boolean isConstruct, boolean isAbstract,
                           boolean isFinal, boolean isStatic, boolean isSynchronized, String content, String comment, String params, IMethodBinding methodBinding,
                           String fullReturnType, String belongTo, String fullParams, String fullVariables, Set<IMethodBinding> methodCalls, String fieldAccesses, String throwTypes) {
+        Preconditions.checkArgument(name != null);
         this.name = name;
+        Preconditions.checkArgument(fullName != null);
         this.fullName = fullName;
+        Preconditions.checkArgument(returnType != null);
         this.returnType = returnType;
+        Preconditions.checkArgument(visibility != null);
         this.visibility = visibility;
         this.isConstruct = isConstruct;
         this.isAbstract = isAbstract;
         this.isFinal = isFinal;
         this.isStatic = isStatic;
         this.isSynchronized = isSynchronized;
+        Preconditions.checkArgument(content != null);
         this.content = content;
+        Preconditions.checkArgument(comment != null);
         this.comment = comment;
+        Preconditions.checkArgument(params != null);
         this.params = params;
+        Preconditions.checkArgument(methodBinding != null);
         this.methodBinding = methodBinding;
+        Preconditions.checkArgument(fullReturnType != null);
         this.fullReturnType = fullReturnType;
+        Preconditions.checkArgument(belongTo != null);
         this.belongTo = belongTo;
+        Preconditions.checkArgument(fullParams != null);
         this.fullParams = fullParams;
+        Preconditions.checkArgument(fullVariables != null);
         this.fullVariables = fullVariables;
+        Preconditions.checkArgument(methodCalls != null);
         this.methodCalls = methodCalls;
+        Preconditions.checkArgument(fieldAccesses != null);
         this.fieldAccesses = fieldAccesses;
+        Preconditions.checkArgument(throwTypes != null);
         this.throwTypes = throwTypes;
     }
 
-    public String getName() {
-        return name;
+    private Node createNode(GraphDatabaseService db) {
+        Node node = db.createNode(JavaCodeGraphBuilder.METHOD);
+        node.setProperty(JavaCodeGraphBuilder.NAME, name);
+        node.setProperty(JavaCodeGraphBuilder.FULLNAME, fullName);
+        node.setProperty(JavaCodeGraphBuilder.RETURN_TYPE_STR, returnType);
+        node.setProperty(JavaCodeGraphBuilder.VISIBILITY, visibility);
+        node.setProperty(JavaCodeGraphBuilder.IS_CONSTRUCTOR, isConstruct);
+        node.setProperty(JavaCodeGraphBuilder.IS_ABSTRACT, isAbstract);
+        node.setProperty(JavaCodeGraphBuilder.IS_STATIC, isStatic);
+        node.setProperty(JavaCodeGraphBuilder.IS_FINAL, isFinal);
+        node.setProperty(JavaCodeGraphBuilder.IS_SYNCHRONIZED, isSynchronized);
+        node.setProperty(JavaCodeGraphBuilder.CONTENT, content);
+        node.setProperty(JavaCodeGraphBuilder.COMMENT, comment);
+        node.setProperty(JavaCodeGraphBuilder.PARAM_TYPE_STR, params);
+        return node;
     }
 
     public String getFullName() {
         return fullName;
     }
 
-    public String getReturnType() {
-        return returnType;
-    }
-
-    public String getVisibility() {
-        return visibility;
-    }
-
-    public boolean isConstruct() {
-        return isConstruct;
-    }
-
-    public boolean isAbstract() {
-        return isAbstract;
-    }
-
-    public boolean isFinal() {
-        return isFinal;
-    }
-
-    public boolean isStatic() {
-        return isStatic;
-    }
-
-    public boolean isSynchronized() {
-        return isSynchronized;
-    }
-
-    public String getContent() {
-        return content;
-    }
-
-    public String getComment() {
-        return comment;
-    }
-
-    public String getParams() {
-        return params;
-    }
-
     public IMethodBinding getMethodBinding() {
         return methodBinding;
-    }
-
-    public String getFullReturnType() {
-        return fullReturnType;
     }
 
     public String getBelongTo() {
@@ -150,6 +105,14 @@ public class JavaMethodInfo implements GraphEntity {
 
     public String getFullParams() {
         return fullParams;
+    }
+
+    public String getFullReturnType() {
+        return fullReturnType;
+    }
+
+    public String getThrowTypes() {
+        return throwTypes;
     }
 
     public String getFullVariables() {
@@ -164,63 +127,14 @@ public class JavaMethodInfo implements GraphEntity {
         return fieldAccesses;
     }
 
-    public String getThrowTypes() {
-        return throwTypes;
-    }
-
-    public Set<JavaClassInfo> getBelongToSet() {
-        return belongToSet;
-    }
-
-    public void setBelongToSet(Set<JavaClassInfo> belongToSet) {
-        this.belongToSet = belongToSet;
-    }
-
-    public Set<JavaClassInfo> getFullParamSet() {
-        return fullParamSet;
-    }
-
-    public void setFullParamSet(Set<JavaClassInfo> fullParamSet) {
-        this.fullParamSet = fullParamSet;
-    }
-
-    public Set<JavaClassInfo> getFullReturnTypeSet() {
-        return fullReturnTypeSet;
-    }
-
-    public void setFullReturnTypeSet(Set<JavaClassInfo> fullReturnTypeSet) {
-        this.fullReturnTypeSet = fullReturnTypeSet;
-    }
-
-    public Set<JavaClassInfo> getThrowTypeSet() {
-        return throwTypeSet;
-    }
-
-    public void setThrowTypeSet(Set<JavaClassInfo> throwTypeSet) {
-        this.throwTypeSet = throwTypeSet;
-    }
-
-    public Set<JavaClassInfo> getFullVariableSet() {
-        return fullVariableSet;
-    }
-
-    public void setFullVariableSet(Set<JavaClassInfo> fullVariableSet) {
-        this.fullVariableSet = fullVariableSet;
-    }
-
-    public Set<JavaMethodInfo> getMethodCallSet() {
-        return methodCallSet;
-    }
-
-    public void setMethodCallSet(Set<JavaMethodInfo> methodCallSet) {
-        this.methodCallSet = methodCallSet;
-    }
-
-    public Set<JavaFieldInfo> getFieldAccessSet() {
-        return fieldAccessSet;
-    }
-
-    public void setFieldAccessSet(Set<JavaFieldInfo> fieldAccessSet) {
-        this.fieldAccessSet = fieldAccessSet;
+    public Node getNode(GraphDatabaseService db) {
+        if (node == null) {
+            synchronized (this) {
+                if (node == null) {
+                    node = createNode(db);
+                }
+            }
+        }
+        return node;
     }
 }

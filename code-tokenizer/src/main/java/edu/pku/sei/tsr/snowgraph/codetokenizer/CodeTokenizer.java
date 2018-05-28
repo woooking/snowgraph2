@@ -4,20 +4,16 @@ import com.hankcs.hanlp.HanLP;
 import com.hankcs.hanlp.seg.common.Term;
 import edu.pku.sei.tsr.snowgraph.api.*;
 import edu.pku.sei.tsr.snowgraph.api.context.SnowGraphContext;
-import edu.pku.sei.tsr.snowgraph.api.context.SnowGraphDBContext;
-import edu.pku.sei.tsr.snowgraph.api.plugin.SnowGraphDBPlugin;
 import edu.pku.sei.tsr.snowgraph.api.plugin.SnowGraphPlugin;
 import org.apache.commons.lang3.StringUtils;
 import org.neo4j.graphdb.*;
-import org.neo4j.graphdb.factory.GraphDatabaseFactory;
 
-import java.io.File;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class CodeTokenizer implements SnowGraphDBPlugin {
+public class CodeTokenizer implements SnowGraphPlugin {
     @Override
     public List<String> dependsOn() {
         return List.of();
@@ -49,12 +45,12 @@ public class CodeTokenizer implements SnowGraphDBPlugin {
     }
 
     @Override
-    public void run(SnowGraphDBContext context) {
-        process(context.getDatabaseBuilder().newGraphDatabase());
+    public void run(SnowGraphContext context) {
+
     }
 
     @Override
-    public void update(SnowGraphDBContext context, Collection<ChangeEvent<Path>> changeEvents) {
+    public void update(SnowGraphContext context, Collection<ChangeEvent<Path>> changeEvents) {
 
     }
 
