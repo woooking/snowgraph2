@@ -9,6 +9,7 @@ import reactor.core.publisher.BaseSubscriber;
 
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
@@ -46,6 +47,10 @@ public class SnowGraphPluginInfo {
 
     public void run(SnowGraphContext context) {
         instance.run(context);
+    }
+
+    public void update(SnowGraphContext context, Collection<ChangeEvent<Path>> changedFiles, Collection<ChangeEvent<Long>> changedNodes, Collection<ChangeEvent<Long>> changedRelationships) {
+        instance.update(context, changedFiles, changedNodes, changedRelationships);
     }
 
     public Subscriber<ChangeEvent<Path>> subcriber() {

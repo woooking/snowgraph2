@@ -1,5 +1,6 @@
 package edu.pku.sei.tsr.snowgraph;
 
+import edu.pku.sei.tsr.snowgraph.api.ChangeEvent;
 import edu.pku.sei.tsr.snowgraph.api.context.SnowGraphContext;
 import edu.pku.sei.tsr.snowgraph.api.plugin.SnowGraphPlugin;
 import edu.pku.sei.tsr.snowgraph.context.BasicSnowGraphContext;
@@ -16,11 +17,15 @@ import reactor.core.scheduler.Schedulers;
 
 import java.io.File;
 import java.lang.reflect.InvocationTargetException;
+import java.nio.file.Path;
 import java.util.*;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 public class SnowGraph {
+    private static Logger logger = LoggerFactory.getLogger(SnowGraph.class);
+
     private final String name;
     private final String dataDir;
     private final String destination;
@@ -39,7 +44,7 @@ public class SnowGraph {
         this.databaseBuilder = new GraphDatabaseFactory().newEmbeddedDatabaseBuilder(new File(destination));
     }
 
-    String getName() {
+    public String getName() {
         return name;
     }
 
@@ -47,13 +52,37 @@ public class SnowGraph {
         return dataDir;
     }
 
+    public String getDestination() {
+        return destination;
+    }
+
     public GraphDatabaseBuilder getDatabaseBuilder() {
         return databaseBuilder;
+    }
+
+    public List<SnowGraphPluginConfig> getPlugins() {
+        return dependencyGraph.getSortedPlugins().stream()
+            .map(SnowGraphPluginInfo::getConfig)
+            .collect(Collectors.toList());
     }
 
     private void watchFile() {
         var publisher = fileWatcher.getPublisher();
         publisher.publishOn(Schedulers.elastic()).subscribe(updater);
+    }
+
+    public void update(List<ChangeEvent<Path>> changedFiles) {
+        var changedNodes = new ArrayList<ChangeEvent<Long>>();
+        var changedRelationships = new ArrayList<ChangeEvent<Long>>();
+        for (SnowGraphPluginInfo plugin : dependencyGraph.getSortedPlugins()) {
+            logger.info("{} started.", plugin.getInstance().getClass().getName());
+            long startTime = System.currentTimeMillis();
+            try (var context = new BasicSnowGraphContext(this, plugin, databaseBuilder)) {
+                plugin.update(context, changedFiles, changedNodes, changedRelationships);
+            }
+            long endTime = System.currentTimeMillis();
+            logger.info("{} uses {} s.", plugin.getClass().getName(), (endTime - startTime) / 1000);
+        }
     }
 
     public static class Builder implements org.apache.commons.lang3.builder.Builder<SnowGraph> {

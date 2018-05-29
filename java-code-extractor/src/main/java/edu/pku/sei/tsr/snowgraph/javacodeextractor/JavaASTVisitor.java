@@ -1,11 +1,11 @@
 package edu.pku.sei.tsr.snowgraph.javacodeextractor;
 
+import edu.pku.sei.tsr.snowgraph.api.Neo4jService;
 import edu.pku.sei.tsr.snowgraph.javacodeextractor.entity.JavaClassInfo;
 import edu.pku.sei.tsr.snowgraph.javacodeextractor.entity.JavaFieldInfo;
 import edu.pku.sei.tsr.snowgraph.javacodeextractor.entity.JavaMethodInfo;
 import edu.pku.sei.tsr.snowgraph.javacodeextractor.entity.JavaProjectInfo;
 import org.eclipse.jdt.core.dom.*;
-import org.neo4j.graphdb.GraphDatabaseService;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -17,8 +17,10 @@ public class JavaASTVisitor extends ASTVisitor {
 
     private final JavaProjectInfo javaProjectInfo;
     private final String sourceContent;
+    private final Neo4jService db;
 
-    public JavaASTVisitor(JavaProjectInfo javaProjectInfo, String sourceContent) {
+    public JavaASTVisitor(Neo4jService db, JavaProjectInfo javaProjectInfo, String sourceContent) {
+        this.db = db;
         this.javaProjectInfo = javaProjectInfo;
         this.sourceContent = sourceContent;
     }
@@ -55,7 +57,7 @@ public class JavaASTVisitor extends ASTVisitor {
         String content = sourceContent.substring(node.getStartPosition(), node.getStartPosition() + node.getLength());
         String superClassType = node.getSuperclassType() == null ? "java.lang.Object" : NameResolver.getFullName(node.getSuperclassType());
         String superInterfaceTypes = String.join(", ", (List<String>) node.superInterfaceTypes().stream().map(n -> NameResolver.getFullName((Type) n)).collect(Collectors.toList()));
-        return new JavaClassInfo(name, fullName, isInterface, visibility, isAbstract, isFinal, comment, content, superClassType, superInterfaceTypes);
+        return new JavaClassInfo(db, name, fullName, isInterface, visibility, isAbstract, isFinal, comment, content, superClassType, superInterfaceTypes);
     }
 
     private JavaMethodInfo createJavaMethodInfo(MethodDeclaration node, String belongTo) {
@@ -88,7 +90,7 @@ public class JavaASTVisitor extends ASTVisitor {
         StringBuilder fullVariables = new StringBuilder();
         StringBuilder fieldAccesses = new StringBuilder();
         parseMethodBody(methodCalls, fullVariables, fieldAccesses, node.getBody());
-        JavaMethodInfo info = new JavaMethodInfo(name, fullName, returnType, visibility, isConstruct, isAbstract,
+        JavaMethodInfo info = new JavaMethodInfo(db, name, fullName, returnType, visibility, isConstruct, isAbstract,
             isFinal, isStatic, isSynchronized, content, comment, params, methodBinding,
             fullReturnType, belongTo, fullParams, fullVariables.toString(), methodCalls, fieldAccesses.toString(), throwTypes);
         return info;
@@ -106,7 +108,7 @@ public class JavaASTVisitor extends ASTVisitor {
             VariableDeclarationFragment fragment = (VariableDeclarationFragment) n;
             String name = fragment.getName().getFullyQualifiedName();
             String fullName = belongTo + "." + name;
-            r.add(new JavaFieldInfo(name, fullName, type, visibility, isStatic, isFinal, comment, belongTo, fullType));
+            r.add(new JavaFieldInfo(db, name, fullName, type, visibility, isStatic, isFinal, comment, belongTo, fullType));
         });
         return r;
     }

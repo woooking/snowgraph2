@@ -2,7 +2,9 @@ package edu.pku.sei.tsr.snowgraph.context;
 
 import edu.pku.sei.tsr.snowgraph.SnowGraph;
 import edu.pku.sei.tsr.snowgraph.SnowGraphPluginInfo;
+import edu.pku.sei.tsr.snowgraph.api.Neo4jService;
 import edu.pku.sei.tsr.snowgraph.api.context.SnowGraphContext;
+import edu.pku.sei.tsr.snowgraph.neo4j.BasicNeo4jService;
 import org.apache.commons.io.FileUtils;
 import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.factory.GraphDatabaseBuilder;
@@ -21,13 +23,13 @@ public class BasicSnowGraphContext implements SnowGraphContext, AutoCloseable {
     private final SnowGraphPluginInfo pluginInfo;
     private final Logger logger;
     private final SnowGraph snowGraph;
-    private final GraphDatabaseService databaseService;
+    private final Neo4jService neo4jService;
 
     public BasicSnowGraphContext(SnowGraph snowGraph, SnowGraphPluginInfo pluginInfo, GraphDatabaseBuilder databaseBuilder) {
         this.snowGraph = snowGraph;
         this.pluginInfo = pluginInfo;
         this.logger = LoggerFactory.getLogger(pluginInfo.getInstance().getClass());
-        this.databaseService = databaseBuilder.newGraphDatabase();
+        this.neo4jService = new BasicNeo4jService(databaseBuilder.newGraphDatabase());
     }
 
     @Override
@@ -46,12 +48,12 @@ public class BasicSnowGraphContext implements SnowGraphContext, AutoCloseable {
     }
 
     @Override
-    public GraphDatabaseService getDatabaseService() {
-        return databaseService;
+    public Neo4jService getNeo4jService() {
+        return neo4jService;
     }
 
     @Override
     public void close() {
-        databaseService.shutdown();
+        neo4jService.close();
     }
 }

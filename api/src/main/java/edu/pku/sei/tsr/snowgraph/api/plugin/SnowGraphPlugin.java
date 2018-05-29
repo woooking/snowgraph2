@@ -27,5 +27,5 @@ public interface SnowGraphPlugin {
 
     void run(SnowGraphContext context);
 
-    void update(SnowGraphContext context, Collection<ChangeEvent<Path>> changeEvents);
+    void update(SnowGraphContext context, Collection<ChangeEvent<Path>> changedFiles, Collection<ChangeEvent<Long>> changedNodes, Collection<ChangeEvent<Long>> changedRelationships);
 }

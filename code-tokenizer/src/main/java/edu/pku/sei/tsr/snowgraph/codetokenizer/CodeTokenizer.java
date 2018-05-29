@@ -50,7 +50,7 @@ public class CodeTokenizer implements SnowGraphPlugin {
     }
 
     @Override
-    public void update(SnowGraphContext context, Collection<ChangeEvent<Path>> changeEvents) {
+    public void update(SnowGraphContext context, Collection<ChangeEvent<Path>> changedFiles, Collection<ChangeEvent<Long>> changedNodes, Collection<ChangeEvent<Long>> changedRelationships) {
 
     }
 

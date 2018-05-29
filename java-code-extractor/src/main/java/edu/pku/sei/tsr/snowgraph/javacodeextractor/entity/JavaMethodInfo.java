@@ -1,11 +1,10 @@
 package edu.pku.sei.tsr.snowgraph.javacodeextractor.entity;
 
 import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableMap;
+import edu.pku.sei.tsr.snowgraph.api.Neo4jService;
 import edu.pku.sei.tsr.snowgraph.javacodeextractor.JavaCodeGraphBuilder;
 import org.eclipse.jdt.core.dom.IMethodBinding;
-import org.neo4j.graphdb.GraphDatabaseService;
-import org.neo4j.graphdb.Node;
-import org.neo4j.unsafe.batchinsert.BatchInserter;
 
 import java.util.Set;
 
@@ -32,9 +31,9 @@ public class JavaMethodInfo {
     private Set<IMethodBinding> methodCalls;
     private String fieldAccesses;
     private String throwTypes;
-    private Node node;
+    private long nodeId;
 
-    public JavaMethodInfo(String name, String fullName, String returnType, String visibility, boolean isConstruct, boolean isAbstract,
+    public JavaMethodInfo(Neo4jService db, String name, String fullName, String returnType, String visibility, boolean isConstruct, boolean isAbstract,
                           boolean isFinal, boolean isStatic, boolean isSynchronized, String content, String comment, String params, IMethodBinding methodBinding,
                           String fullReturnType, String belongTo, String fullParams, String fullVariables, Set<IMethodBinding> methodCalls, String fieldAccesses, String throwTypes) {
         Preconditions.checkArgument(name != null);
@@ -72,23 +71,28 @@ public class JavaMethodInfo {
         this.fieldAccesses = fieldAccesses;
         Preconditions.checkArgument(throwTypes != null);
         this.throwTypes = throwTypes;
+        nodeId = createNode(db);
     }
 
-    private Node createNode(GraphDatabaseService db) {
-        Node node = db.createNode(JavaCodeGraphBuilder.METHOD);
-        node.setProperty(JavaCodeGraphBuilder.NAME, name);
-        node.setProperty(JavaCodeGraphBuilder.FULLNAME, fullName);
-        node.setProperty(JavaCodeGraphBuilder.RETURN_TYPE_STR, returnType);
-        node.setProperty(JavaCodeGraphBuilder.VISIBILITY, visibility);
-        node.setProperty(JavaCodeGraphBuilder.IS_CONSTRUCTOR, isConstruct);
-        node.setProperty(JavaCodeGraphBuilder.IS_ABSTRACT, isAbstract);
-        node.setProperty(JavaCodeGraphBuilder.IS_STATIC, isStatic);
-        node.setProperty(JavaCodeGraphBuilder.IS_FINAL, isFinal);
-        node.setProperty(JavaCodeGraphBuilder.IS_SYNCHRONIZED, isSynchronized);
-        node.setProperty(JavaCodeGraphBuilder.CONTENT, content);
-        node.setProperty(JavaCodeGraphBuilder.COMMENT, comment);
-        node.setProperty(JavaCodeGraphBuilder.PARAM_TYPE_STR, params);
-        return node;
+    private long createNode(Neo4jService db) {
+        var properties = ImmutableMap.<String, Object>builder()
+            .put(JavaCodeGraphBuilder.NAME, name)
+            .put(JavaCodeGraphBuilder.FULLNAME, fullName)
+            .put(JavaCodeGraphBuilder.RETURN_TYPE_STR, returnType)
+            .put(JavaCodeGraphBuilder.VISIBILITY, visibility)
+            .put(JavaCodeGraphBuilder.IS_CONSTRUCTOR, isConstruct)
+            .put(JavaCodeGraphBuilder.IS_ABSTRACT, isAbstract)
+            .put(JavaCodeGraphBuilder.IS_STATIC, isStatic)
+            .put(JavaCodeGraphBuilder.IS_FINAL, isFinal)
+            .put(JavaCodeGraphBuilder.IS_SYNCHRONIZED, isSynchronized)
+            .put(JavaCodeGraphBuilder.CONTENT, content)
+            .put(JavaCodeGraphBuilder.COMMENT, comment)
+            .put(JavaCodeGraphBuilder.PARAM_TYPE_STR, params)
+            .build();
+        nodeId = db.createNode(JavaCodeGraphBuilder.METHOD, properties);
+        return nodeId;
+
+
     }
 
     public String getFullName() {
@@ -127,14 +131,7 @@ public class JavaMethodInfo {
         return fieldAccesses;
     }
 
-    public Node getNode(GraphDatabaseService db) {
-        if (node == null) {
-            synchronized (this) {
-                if (node == null) {
-                    node = createNode(db);
-                }
-            }
-        }
-        return node;
+    public long getNodeId() {
+        return nodeId;
     }
 }

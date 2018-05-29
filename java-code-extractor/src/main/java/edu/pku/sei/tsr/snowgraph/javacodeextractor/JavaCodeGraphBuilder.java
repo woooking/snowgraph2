@@ -1,6 +1,7 @@
 package edu.pku.sei.tsr.snowgraph.javacodeextractor;
 
 import edu.pku.sei.tsr.snowgraph.api.ChangeEvent;
+import edu.pku.sei.tsr.snowgraph.api.Neo4jService;
 import edu.pku.sei.tsr.snowgraph.javacodeextractor.entity.JavaProjectInfo;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.SuffixFileFilter;
@@ -9,10 +10,8 @@ import org.eclipse.jdt.core.dom.AST;
 import org.eclipse.jdt.core.dom.ASTParser;
 import org.eclipse.jdt.core.dom.CompilationUnit;
 import org.eclipse.jdt.core.dom.FileASTRequestor;
-import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.Label;
 import org.neo4j.graphdb.RelationshipType;
-import org.neo4j.unsafe.batchinsert.BatchInserter;
 
 import java.io.File;
 import java.io.FileFilter;
@@ -76,8 +75,6 @@ public class JavaCodeGraphBuilder {
     public static final String IS_CONSTRUCTOR="isConstructor";
     public static final String IS_STATIC="isStatic";
     public static final String IS_SYNCHRONIZED="isSynchronized";
-    private String srcDir;
-    private BatchInserter inserter= null;
 
     private FileFilter javaFileFilter = new SuffixFileFilter(new String[]{".java"});
     private JavaProjectInfo javaProjectInfo;
@@ -88,11 +85,11 @@ public class JavaCodeGraphBuilder {
         javaProjectInfo = new JavaProjectInfo();
     }
 
-    void process(GraphDatabaseService db, Collection<File> files) {
+    void process(Neo4jService db, Collection<File> files) {
         onFilesCreated(db, files);
     }
 
-    void update(GraphDatabaseService db, Collection<ChangeEvent<Path>> changeEvents) {
+    void update(Neo4jService db, Collection<ChangeEvent<Path>> changeEvents) {
         var events = changeEvents.stream()
             .collect(
                 groupingBy(ChangeEvent::getType,
@@ -102,7 +99,7 @@ public class JavaCodeGraphBuilder {
         onFilesCreated(db, events.get(ChangeEvent.Type.CREATED));
     }
 
-    private void onFilesCreated(GraphDatabaseService db, Collection<File> files) {
+    private void onFilesCreated(Neo4jService db, Collection<File> files) {
         Collection<File> javaFiles = files.stream().filter(javaFileFilter::accept).collect(toList());
         srcPathSet.addAll(javaFiles.stream().map(File::getAbsolutePath).collect(toSet()));
         srcFolderSet.addAll(javaFiles.stream().map(File::getParentFile).map(File::getAbsolutePath).collect(toSet()));
@@ -118,7 +115,7 @@ public class JavaCodeGraphBuilder {
 //        run(serviceFactory, javaFiles);
     }
 
-    private void run(GraphDatabaseService db, Collection<File> files) {
+    private void run(Neo4jService db, Collection<File> files) {
         String[] todoFiles = new String[files.size()];
         files.stream().map(File::getAbsolutePath).collect(toSet()).toArray(todoFiles);
         String[] srcFolderPaths = new String[srcFolderSet.size()];
@@ -134,16 +131,19 @@ public class JavaCodeGraphBuilder {
         parser.setCompilerOptions(options);
         parser.setBindingsRecovery(true);
         parser.setEnvironment(null, srcFolderPaths, null, true);
-        parser.createASTs(todoFiles, null, new String[]{}, new FileASTRequestor() {
-            @Override
-            public void acceptAST(String sourceFilePath, CompilationUnit javaUnit) {
-                try {
-                    javaUnit.accept(new JavaASTVisitor(javaProjectInfo, FileUtils.readFileToString(new File(sourceFilePath), "utf-8")));
-                } catch (IOException e) {
-                    e.printStackTrace();
+        try (var tx = db.beginTx()) {
+            parser.createASTs(todoFiles, null, new String[]{}, new FileASTRequestor() {
+                @Override
+                public void acceptAST(String sourceFilePath, CompilationUnit javaUnit) {
+                    try {
+                        javaUnit.accept(new JavaASTVisitor(db, javaProjectInfo, FileUtils.readFileToString(new File(sourceFilePath), "utf-8")));
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
                 }
-            }
-        }, null);
+            }, null);
+            tx.success();
+        }
         javaProjectInfo.buildRelationsAndSave(db);
     }
 }

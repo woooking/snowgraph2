@@ -1,5 +1,6 @@
 package edu.pku.sei.tsr.snowgraph.api.context;
 
+import edu.pku.sei.tsr.snowgraph.api.Neo4jService;
 import org.neo4j.graphdb.GraphDatabaseService;
 import org.slf4j.Logger;
 
@@ -11,5 +12,5 @@ public interface SnowGraphContext {
 
     Logger getLogger();
 
-    GraphDatabaseService getDatabaseService();
+    Neo4jService getNeo4jService();
 }

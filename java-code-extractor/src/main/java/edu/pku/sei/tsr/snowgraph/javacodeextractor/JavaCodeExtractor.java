@@ -46,12 +46,12 @@ public class JavaCodeExtractor implements SnowGraphPlugin {
 
     @Override
     public void run(SnowGraphContext context) {
-        graphBuilder.process(context.getDatabaseService(), context.getData());
+        graphBuilder.process(context.getNeo4jService(), context.getData());
     }
 
     @Override
-    public void update(SnowGraphContext context, Collection<ChangeEvent<Path>> changeEvents) {
-        graphBuilder.update(context.getDatabaseService(), changeEvents);
+    public void update(SnowGraphContext context, Collection<ChangeEvent<Path>> changedFiles, Collection<ChangeEvent<Long>> changedNodes, Collection<ChangeEvent<Long>> changedRelationships) {
+        graphBuilder.update(context.getNeo4jService(), changedFiles);
     }
 
 }
