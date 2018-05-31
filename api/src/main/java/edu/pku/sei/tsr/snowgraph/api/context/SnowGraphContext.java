@@ -1,7 +1,6 @@
 package edu.pku.sei.tsr.snowgraph.api.context;
 
-import edu.pku.sei.tsr.snowgraph.api.Neo4jService;
-import org.neo4j.graphdb.GraphDatabaseService;
+import edu.pku.sei.tsr.snowgraph.api.neo4j.Neo4jService;
 import org.slf4j.Logger;
 
 import java.io.File;

@@ -1,6 +1,6 @@
 package edu.pku.sei.tsr.snowgraph;
 
-import edu.pku.sei.tsr.snowgraph.api.ChangeEvent;
+import edu.pku.sei.tsr.snowgraph.api.event.ChangeEvent;
 import edu.pku.sei.tsr.snowgraph.api.context.SnowGraphContext;
 import edu.pku.sei.tsr.snowgraph.api.plugin.SnowGraphPlugin;
 import org.reactivestreams.Subscriber;
@@ -10,7 +10,6 @@ import reactor.core.publisher.BaseSubscriber;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 
 public class SnowGraphPluginInfo {

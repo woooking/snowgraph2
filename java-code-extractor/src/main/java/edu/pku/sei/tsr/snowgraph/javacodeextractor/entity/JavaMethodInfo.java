@@ -2,7 +2,7 @@ package edu.pku.sei.tsr.snowgraph.javacodeextractor.entity;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
-import edu.pku.sei.tsr.snowgraph.api.Neo4jService;
+import edu.pku.sei.tsr.snowgraph.api.neo4j.Neo4jService;
 import edu.pku.sei.tsr.snowgraph.javacodeextractor.JavaCodeGraphBuilder;
 import org.eclipse.jdt.core.dom.IMethodBinding;
 

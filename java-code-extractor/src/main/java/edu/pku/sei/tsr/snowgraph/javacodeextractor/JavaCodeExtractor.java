@@ -2,6 +2,7 @@ package edu.pku.sei.tsr.snowgraph.javacodeextractor;
 
 import edu.pku.sei.tsr.snowgraph.api.*;
 import edu.pku.sei.tsr.snowgraph.api.context.SnowGraphContext;
+import edu.pku.sei.tsr.snowgraph.api.event.ChangeEvent;
 import edu.pku.sei.tsr.snowgraph.api.plugin.SnowGraphPlugin;
 
 import java.nio.file.Path;

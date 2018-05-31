@@ -1,6 +1,6 @@
 package edu.pku.sei.tsr.snowgraph.javacodeextractor;
 
-import edu.pku.sei.tsr.snowgraph.api.Neo4jService;
+import edu.pku.sei.tsr.snowgraph.api.neo4j.Neo4jService;
 import edu.pku.sei.tsr.snowgraph.javacodeextractor.entity.JavaClassInfo;
 import edu.pku.sei.tsr.snowgraph.javacodeextractor.entity.JavaFieldInfo;
 import edu.pku.sei.tsr.snowgraph.javacodeextractor.entity.JavaMethodInfo;

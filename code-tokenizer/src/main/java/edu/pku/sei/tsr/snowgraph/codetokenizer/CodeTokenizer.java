@@ -2,17 +2,25 @@ package edu.pku.sei.tsr.snowgraph.codetokenizer;
 
 import com.hankcs.hanlp.HanLP;
 import com.hankcs.hanlp.seg.common.Term;
-import edu.pku.sei.tsr.snowgraph.api.*;
+import edu.pku.sei.tsr.snowgraph.api.InitRegistry;
+import edu.pku.sei.tsr.snowgraph.api.PostInitRegistry;
+import edu.pku.sei.tsr.snowgraph.api.PreInitRegistry;
 import edu.pku.sei.tsr.snowgraph.api.context.SnowGraphContext;
+import edu.pku.sei.tsr.snowgraph.api.event.ChangeEvent;
+import edu.pku.sei.tsr.snowgraph.api.neo4j.Neo4jNode;
+import edu.pku.sei.tsr.snowgraph.api.neo4j.Neo4jService;
 import edu.pku.sei.tsr.snowgraph.api.plugin.SnowGraphPlugin;
 import org.apache.commons.lang3.StringUtils;
-import org.neo4j.graphdb.*;
+import org.neo4j.graphdb.Label;
+import org.neo4j.graphdb.Transaction;
 
 import java.nio.file.Path;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
+@SuppressWarnings("unused")
 public class CodeTokenizer implements SnowGraphPlugin {
     @Override
     public List<String> dependsOn() {
@@ -46,12 +54,12 @@ public class CodeTokenizer implements SnowGraphPlugin {
 
     @Override
     public void run(SnowGraphContext context) {
-
+        process(context.getNeo4jService());
     }
 
     @Override
     public void update(SnowGraphContext context, Collection<ChangeEvent<Path>> changedFiles, Collection<ChangeEvent<Long>> changedNodes, Collection<ChangeEvent<Long>> changedRelationships) {
-
+        update(context.getNeo4jService(), changedNodes);
     }
 
     public static final String IS_TEXT = "isText";
@@ -59,46 +67,62 @@ public class CodeTokenizer implements SnowGraphPlugin {
     public static final String TEXT = "_text";
     public static final String CODE_TOKENS = "codeTokens";
 
-    public static void process(GraphDatabaseService db) {
+    public static void process(Neo4jService db) {
         try (Transaction tx = db.beginTx()) {
-            ResourceIterator<Node> nodes = db.findNodes(Label.label("class"));
-            nodes.stream().forEach(node -> codeTokenExtraction(node));
-            nodes = db.findNodes(Label.label("method"));
-            nodes.stream().forEach(node -> codeTokenExtraction(node));
-            nodes = db.findNodes(Label.label("field"));
-            nodes.stream().forEach(node -> codeTokenExtraction(node));
+            var nodes = db.findNodes(Label.label("Class"));
+            nodes.forEach(CodeTokenizer::codeTokenExtraction);
+            nodes = db.findNodes(Label.label("Method"));
+            nodes.forEach(CodeTokenizer::codeTokenExtraction);
+            nodes = db.findNodes(Label.label("Field"));
+            nodes.forEach(CodeTokenizer::codeTokenExtraction);
             tx.success();
         }
 
-        List<List<Node>> nodeSegs = new ArrayList<>();
+        List<List<Neo4jNode>> nodeSegs;
 
         try (Transaction tx = db.beginTx()) {
-            ResourceIterator<Node> nodes = db.getAllNodes().iterator();
-            List<Node> list = new ArrayList<>();
-            while (nodes.hasNext()) {
-                Node node = nodes.next();
-                if (list.size() < 1000)
-                    list.add(node);
-                else {
-                    nodeSegs.add(list);
-                    list = new ArrayList<>();
-                }
-            }
-            if (list.size() > 0)
-                nodeSegs.add(list);
+            var nodes = db.getAllNodes();
+            nodeSegs = nodes.collect(CountCollector.create(1000));
             tx.success();
         }
-        for (List<Node> list : nodeSegs)
+        for (List<Neo4jNode> list : nodeSegs)
             try (Transaction tx = db.beginTx()) {
-                for (Node node : list)
-                    flossTextExtraction(node);
+                list.forEach(CodeTokenizer::flossTextExtraction);
                 tx.success();
             }
-
-        db.shutdown();
     }
 
-    private static void flossTextExtraction(Node node) {
+    public static void update(Neo4jService db, Collection<ChangeEvent<Long>> changedNodes) {
+        List<Neo4jNode> neo4jNodes;
+        try(Transaction tx = db.beginTx()) {
+            neo4jNodes = changedNodes.stream()
+                .map(p -> new ChangeEvent<>(p.getType(), db.getNodeById(p.getInstance())))
+                .filter(n -> n.getType() != ChangeEvent.Type.DELETED)
+                .map(ChangeEvent::getInstance)
+                .collect(Collectors.toList());
+        }
+
+        try (Transaction tx = db.beginTx()) {
+            neo4jNodes.stream()
+                .filter(n -> n.hasLabel("Class") || n.hasLabel("Method") || n.hasLabel("Field"))
+                .forEach(CodeTokenizer::codeTokenExtraction);
+            tx.success();
+        }
+
+        List<List<Neo4jNode>> nodeSegs;
+
+        try (Transaction tx = db.beginTx()) {
+            nodeSegs = neo4jNodes.stream().collect(CountCollector.create(1000));
+            tx.success();
+        }
+        for (List<Neo4jNode> list : nodeSegs)
+            try (Transaction tx = db.beginTx()) {
+                list.forEach(CodeTokenizer::flossTextExtraction);
+                tx.success();
+            }
+    }
+
+    private static void flossTextExtraction(Neo4jNode node) {
         if (node.hasProperty(TITLE))
             node.removeProperty(TITLE);
         if (node.hasProperty(TEXT))
@@ -106,13 +130,13 @@ public class CodeTokenizer implements SnowGraphPlugin {
         if (node.hasProperty(IS_TEXT))
             node.removeProperty(IS_TEXT);
 
-        if (node.hasLabel(Label.label("class")) || node.hasLabel(Label.label("method"))) {
+        if (node.hasLabel("class") || node.hasLabel("method")) {
             node.setProperty(TITLE, node.getProperty("fullName"));
             node.setProperty(TEXT, node.getProperty("content"));
             node.setProperty(IS_TEXT, true);
         }
 
-        if (node.hasLabel(Label.label("commit"))) {
+        if (node.hasLabel("commit")) {
             node.setProperty(TITLE, "name");
             node.setProperty(TEXT, node.getProperty("message"));
             node.setProperty(IS_TEXT, true);
@@ -122,7 +146,7 @@ public class CodeTokenizer implements SnowGraphPlugin {
 
     }
 
-    private static void codeTokenExtraction(Node node) {
+    private static void codeTokenExtraction(Neo4jNode node) {
         String content = "";
         if (node.hasProperty("fullName"))
             content += (String) node.getProperty("name");
@@ -133,9 +157,8 @@ public class CodeTokenizer implements SnowGraphPlugin {
     public static Set<String> tokenization(String content) {
         Set<String> r = new HashSet<>();
         content = content.replaceAll("[^\\u4e00-\\u9fa5\\w]+", " ");
-        content.trim();
-        if (content.length() == 0)
-            return r;
+        content = content.trim();
+        if (content.length() == 0) return r;
         List<Term> terms = HanLP.segment(content);
         for (Term term : terms) {
             String word = term.word;

@@ -1,7 +1,7 @@
 package edu.pku.sei.tsr.snowgraph.javacodeextractor;
 
-import edu.pku.sei.tsr.snowgraph.api.ChangeEvent;
-import edu.pku.sei.tsr.snowgraph.api.Neo4jService;
+import edu.pku.sei.tsr.snowgraph.api.event.ChangeEvent;
+import edu.pku.sei.tsr.snowgraph.api.neo4j.Neo4jService;
 import edu.pku.sei.tsr.snowgraph.javacodeextractor.entity.JavaProjectInfo;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.SuffixFileFilter;

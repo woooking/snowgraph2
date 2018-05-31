@@ -1,14 +1,17 @@
 package edu.pku.sei.tsr.snowgraph;
 
-import edu.pku.sei.tsr.snowgraph.api.ChangeEvent;
-import edu.pku.sei.tsr.snowgraph.api.context.SnowGraphContext;
+import edu.pku.sei.tsr.snowgraph.api.event.ChangeEvent;
+import edu.pku.sei.tsr.snowgraph.api.event.ChangeEventManager;
 import edu.pku.sei.tsr.snowgraph.api.plugin.SnowGraphPlugin;
 import edu.pku.sei.tsr.snowgraph.context.BasicSnowGraphContext;
 import edu.pku.sei.tsr.snowgraph.exception.DependenceException;
+import edu.pku.sei.tsr.snowgraph.neo4j.BasicNeo4jService;
+import edu.pku.sei.tsr.snowgraph.neo4j.ChangeEventNeo4jService;
 import edu.pku.sei.tsr.snowgraph.registry.LifeCycleRegistry;
 import edu.pku.sei.tsr.snowgraph.registry.SnowGraphInitRegistry;
 import edu.pku.sei.tsr.snowgraph.registry.SnowGraphPostInitRegistry;
 import edu.pku.sei.tsr.snowgraph.registry.SnowGraphPreInitRegistry;
+import org.apache.commons.lang3.tuple.Pair;
 import org.neo4j.graphdb.factory.GraphDatabaseBuilder;
 import org.neo4j.graphdb.factory.GraphDatabaseFactory;
 import org.slf4j.Logger;
@@ -71,18 +74,22 @@ public class SnowGraph {
         publisher.publishOn(Schedulers.elastic()).subscribe(updater);
     }
 
-    public void update(List<ChangeEvent<Path>> changedFiles) {
-        var changedNodes = new ArrayList<ChangeEvent<Long>>();
-        var changedRelationships = new ArrayList<ChangeEvent<Long>>();
+    public Pair<ChangeEventManager<Long>, ChangeEventManager<Long>> update(List<ChangeEvent<Path>> changedFiles) {
+        var changedNodes = new ChangeEventManager<Long>();
+        var changedRelationships = new ChangeEventManager<Long>();
         for (SnowGraphPluginInfo plugin : dependencyGraph.getSortedPlugins()) {
             logger.info("{} started.", plugin.getInstance().getClass().getName());
             long startTime = System.currentTimeMillis();
-            try (var context = new BasicSnowGraphContext(this, plugin, databaseBuilder)) {
-                plugin.update(context, changedFiles, changedNodes, changedRelationships);
+            var neo4jService = new ChangeEventNeo4jService(databaseBuilder.newGraphDatabase());
+            try (var context = new BasicSnowGraphContext(this, plugin, neo4jService)) {
+                plugin.update(context, changedFiles, changedNodes.getChanges(), changedRelationships.getChanges());
             }
             long endTime = System.currentTimeMillis();
             logger.info("{} uses {} s.", plugin.getClass().getName(), (endTime - startTime) / 1000);
+            neo4jService.getChangedNodes().forEach(changedNodes::addEvent);
+            neo4jService.getChangedRelationships().forEach(changedRelationships::addEvent);
         }
+        return Pair.of(changedNodes, changedRelationships);
     }
 
     public static class Builder implements org.apache.commons.lang3.builder.Builder<SnowGraph> {
@@ -145,7 +152,7 @@ public class SnowGraph {
             dependencyGraph.getSortedPlugins().forEach(plugin -> {
                 logger.info("{} started.", plugin.getInstance().getClass().getName());
                 long startTime = System.currentTimeMillis();
-                try(var context = new BasicSnowGraphContext(snowGraph, plugin, snowGraph.getDatabaseBuilder())) {
+                try (var context = new BasicSnowGraphContext(snowGraph, plugin, new BasicNeo4jService(snowGraph.getDatabaseBuilder().newGraphDatabase()))) {
                     plugin.run(context);
                 }
                 long endTime = System.currentTimeMillis();
