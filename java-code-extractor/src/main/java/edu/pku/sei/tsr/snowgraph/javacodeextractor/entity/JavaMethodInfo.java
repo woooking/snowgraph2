@@ -89,7 +89,7 @@ public class JavaMethodInfo {
             .put(JavaCodeGraphBuilder.COMMENT, comment)
             .put(JavaCodeGraphBuilder.PARAM_TYPE_STR, params)
             .build();
-        nodeId = db.createNode(JavaCodeGraphBuilder.METHOD, properties);
+        nodeId = db.createNode(JavaCodeGraphBuilder.METHOD, properties).getId();
         return nodeId;
 
 

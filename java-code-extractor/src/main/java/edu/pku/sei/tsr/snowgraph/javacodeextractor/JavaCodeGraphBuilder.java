@@ -19,6 +19,7 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import static java.util.stream.Collectors.groupingBy;
 import static java.util.stream.Collectors.mapping;
@@ -47,9 +48,9 @@ import static java.util.stream.Collectors.toSet;
  */
 
 public class JavaCodeGraphBuilder {
-    public static final Label CLASS = Label.label("Class");
-    public static final Label METHOD = Label.label("Method");
-    public static final Label FIELD = Label.label("Field");
+    public static final String CLASS = "Class";
+    public static final String METHOD = "Method";
+    public static final String FIELD = "Field";
     public static final RelationshipType EXTEND = RelationshipType.withName("extend");
     public static final RelationshipType IMPLEMENT = RelationshipType.withName("implement");
     public static final RelationshipType HAVE_METHOD = RelationshipType.withName("haveMethod");
@@ -86,7 +87,10 @@ public class JavaCodeGraphBuilder {
     }
 
     void process(Neo4jService db, Collection<File> files) {
-        onFilesCreated(db, files);
+        var codes = files.stream()
+            .flatMap(p -> FileUtils.listFiles(p, null, true).stream())
+            .collect(Collectors.toList());
+        onFilesCreated(db, codes);
     }
 
     void update(Neo4jService db, Collection<ChangeEvent<Path>> changeEvents) {

@@ -5,6 +5,7 @@ import edu.pku.sei.tsr.snowgraph.javacodeextractor.JavaCodeGraphBuilder;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.neo4j.graphdb.Label;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
 
@@ -55,13 +56,13 @@ public class JavaCodeAndTokenizerTest {
 
     @Test
     public void basicTest() {
-        assertEquals(snowGraph.getName(), "nutch");
+        assertEquals("nutch", snowGraph.getName());
         var db = snowGraph.getDatabaseBuilder().newGraphDatabase();
 
         try (var tx = db.beginTx()) {
-            assertEquals(db.findNodes(JavaCodeGraphBuilder.CLASS).stream().count(), 408);
-            assertEquals(db.findNodes(JavaCodeGraphBuilder.METHOD).stream().count(), 2377);
-            assertEquals(db.findNodes(JavaCodeGraphBuilder.FIELD).stream().count(), 1486);
+            assertEquals(408, db.findNodes(Label.label(JavaCodeGraphBuilder.CLASS)).stream().count());
+            assertEquals(2377, db.findNodes(Label.label(JavaCodeGraphBuilder.METHOD)).stream().count());
+            assertEquals(1486, db.findNodes(Label.label(JavaCodeGraphBuilder.FIELD)).stream().count());
             tx.success();
         }
     }
@@ -76,14 +77,14 @@ public class JavaCodeAndTokenizerTest {
 
         var db = snowGraph.getDatabaseBuilder().newGraphDatabase();
         try (var tx = db.beginTx()) {
-            assertEquals(db.findNodes(JavaCodeGraphBuilder.CLASS).stream().count(), 409);
-            assertEquals(db.findNodes(JavaCodeGraphBuilder.METHOD).stream().count(), 2448);
-            assertEquals(db.findNodes(JavaCodeGraphBuilder.FIELD).stream().count(), 1500);
+            assertEquals(409, db.findNodes(Label.label(JavaCodeGraphBuilder.CLASS)).stream().count());
+            assertEquals(2448, db.findNodes(Label.label(JavaCodeGraphBuilder.METHOD)).stream().count());
+            assertEquals(1500, db.findNodes(Label.label(JavaCodeGraphBuilder.FIELD)).stream().count());
             tx.success();
         }
 
-        assertEquals(changes.getLeft().getChanges().size(), 1 + 71 + 14);
-        assertEquals(changes.getRight().getChanges().size(), 126);
+        assertEquals(1 + 71 + 14, changes.getLeft().getChanges().size());
+        assertEquals(126, changes.getRight().getChanges().size());
 
         Files.delete(target);
     }

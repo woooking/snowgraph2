@@ -38,15 +38,15 @@ public class BasicNeo4jService implements Neo4jService {
     }
 
     @Override
-    public Stream<Neo4jNode> findNodes(Label label) {
-        return graphDatabaseService.findNodes(label).stream().map(BasicNeo4jNode::new);
+    public Stream<Neo4jNode> findNodes(String label) {
+        return graphDatabaseService.findNodes(Label.label(label)).stream().map(BasicNeo4jNode::new);
     }
 
     @Override
-    public long createNode(Label label, Map<String, Object> properties) {
-        var node = graphDatabaseService.createNode(label);
+    public Neo4jNode createNode(String label, Map<String, Object> properties) {
+        var node = graphDatabaseService.createNode(Label.label(label));
         properties.forEach(node::setProperty);
-        return node.getId();
+        return new BasicNeo4jNode(node);
     }
 
     @Override

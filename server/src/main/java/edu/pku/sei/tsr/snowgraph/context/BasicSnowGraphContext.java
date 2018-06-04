@@ -33,7 +33,7 @@ public class BasicSnowGraphContext implements SnowGraphContext, AutoCloseable {
 
         return this.pluginInfo.getDataPaths().stream()
             .map(dataRoot::resolve)
-            .flatMap(p -> FileUtils.listFiles(p.toFile(), null, true).stream())
+            .map(Path::toFile)
             .collect(Collectors.toList());
     }
 

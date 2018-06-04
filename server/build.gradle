@@ -17,10 +17,13 @@ dependencies {
     compile group: 'com.fasterxml.jackson.dataformat', name: 'jackson-dataformat-yaml', version: '2.9.5'
     compile project(':api')
 
-    testCompile 'org.springframework.boot:spring-boot-starter-test'
+    testCompile("org.springframework.boot:spring-boot-starter-test") {
+        exclude group: "com.vaadin.external.google", module: "android-json"
+    }
     testCompile group: 'io.projectreactor', name: 'reactor-test', version: '3.1.7.RELEASE'
+    testCompile project(':java-code-extractor')
+    testCompile project(':code-tokenizer')
+    testCompile project(':jira-extractor')
 
     runtime group: 'org.neo4j', name: 'neo4j-ogm-embedded-driver', version: '3.1.0'
-    runtime project(':java-code-extractor')
-    runtime project(':code-tokenizer')
 }

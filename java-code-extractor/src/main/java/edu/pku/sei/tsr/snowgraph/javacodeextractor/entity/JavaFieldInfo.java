@@ -49,7 +49,7 @@ public class JavaFieldInfo {
             .put(JavaCodeGraphBuilder.IS_FINAL, isFinal)
             .put(JavaCodeGraphBuilder.COMMENT, comment)
             .build();
-        nodeId = db.createNode(JavaCodeGraphBuilder.FIELD, properties);
+        nodeId = db.createNode(JavaCodeGraphBuilder.FIELD, properties).getId();
         return nodeId;
 
     }

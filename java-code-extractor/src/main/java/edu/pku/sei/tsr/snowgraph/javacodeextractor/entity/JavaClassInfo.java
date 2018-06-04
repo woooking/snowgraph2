@@ -52,7 +52,7 @@ public class JavaClassInfo {
             .put(JavaCodeGraphBuilder.COMMENT, comment)
             .put(JavaCodeGraphBuilder.CONTENT, content)
             .build();
-        nodeId = db.createNode(JavaCodeGraphBuilder.CLASS, properties);
+        nodeId = db.createNode(JavaCodeGraphBuilder.CLASS, properties).getId();
         return nodeId;
     }
 

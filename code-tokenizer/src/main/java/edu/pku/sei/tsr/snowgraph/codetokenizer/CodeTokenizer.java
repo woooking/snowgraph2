@@ -69,11 +69,11 @@ public class CodeTokenizer implements SnowGraphPlugin {
 
     public static void process(Neo4jService db) {
         try (Transaction tx = db.beginTx()) {
-            var nodes = db.findNodes(Label.label("Class"));
+            var nodes = db.findNodes("Class");
             nodes.forEach(CodeTokenizer::codeTokenExtraction);
-            nodes = db.findNodes(Label.label("Method"));
+            nodes = db.findNodes("Method");
             nodes.forEach(CodeTokenizer::codeTokenExtraction);
-            nodes = db.findNodes(Label.label("Field"));
+            nodes = db.findNodes("Field");
             nodes.forEach(CodeTokenizer::codeTokenExtraction);
             tx.success();
         }
@@ -130,13 +130,13 @@ public class CodeTokenizer implements SnowGraphPlugin {
         if (node.hasProperty(IS_TEXT))
             node.removeProperty(IS_TEXT);
 
-        if (node.hasLabel("class") || node.hasLabel("method")) {
+        if (node.hasLabel("Class") || node.hasLabel("Method")) {
             node.setProperty(TITLE, node.getProperty("fullName"));
             node.setProperty(TEXT, node.getProperty("content"));
             node.setProperty(IS_TEXT, true);
         }
 
-        if (node.hasLabel("commit")) {
+        if (node.hasLabel("Commit")) {
             node.setProperty(TITLE, "name");
             node.setProperty(TEXT, node.getProperty("message"));
             node.setProperty(IS_TEXT, true);

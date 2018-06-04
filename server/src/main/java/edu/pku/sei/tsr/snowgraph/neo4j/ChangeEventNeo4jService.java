@@ -45,17 +45,17 @@ public class ChangeEventNeo4jService implements Neo4jService {
     }
 
     @Override
-    public Stream<Neo4jNode> findNodes(Label label) {
-        return graphDatabaseService.findNodes(label).stream().map(n -> new ChangeEventNeo4jNode(changedNodes, n));
+    public Stream<Neo4jNode> findNodes(String label) {
+        return graphDatabaseService.findNodes(Label.label(label)).stream().map(n -> new ChangeEventNeo4jNode(changedNodes, n));
     }
 
     @Override
-    public long createNode(Label label, Map<String, Object> properties) {
-        var node = graphDatabaseService.createNode(label);
+    public Neo4jNode createNode(String label, Map<String, Object> properties) {
+        var node = graphDatabaseService.createNode(Label.label(label));
         properties.forEach(node::setProperty);
         var id = node.getId();
         changedNodes.addEvent(id, ChangeEvent.Type.CREATED);
-        return id;
+        return new ChangeEventNeo4jNode(changedNodes, node);
     }
 
     @Override

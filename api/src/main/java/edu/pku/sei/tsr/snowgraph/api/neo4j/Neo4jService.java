@@ -16,13 +16,13 @@ public interface Neo4jService extends AutoCloseable {
 
     Stream<Neo4jNode> getAllNodes();
 
-    Stream<Neo4jNode> findNodes(Label label);
+    Stream<Neo4jNode> findNodes(String label);
 
-    default long createNode(Label label) {
+    default Neo4jNode createNode(String label) {
         return createNode(label, Map.of());
     }
 
-    long createNode(Label label, Map<String, Object> properties);
+    Neo4jNode createNode(String label, Map<String, Object> properties);
 
     long createRelationship(long nodeAId, long nodeBId, RelationshipType type);
 }

@@ -79,12 +79,13 @@ public class SnowGraph {
         var changedRelationships = new ChangeEventManager<Long>();
         for (SnowGraphPluginInfo plugin : dependencyGraph.getSortedPlugins()) {
             logger.info("{} started.", plugin.getInstance().getClass().getName());
-            long startTime = System.currentTimeMillis();
+            // TODO: 只传入plugin注册的data dir下的Path
+            var startTime = System.currentTimeMillis();
             var neo4jService = new ChangeEventNeo4jService(databaseBuilder.newGraphDatabase());
             try (var context = new BasicSnowGraphContext(this, plugin, neo4jService)) {
                 plugin.update(context, changedFiles, changedNodes.getChanges(), changedRelationships.getChanges());
             }
-            long endTime = System.currentTimeMillis();
+            var endTime = System.currentTimeMillis();
             logger.info("{} uses {} s.", plugin.getClass().getName(), (endTime - startTime) / 1000);
             neo4jService.getChangedNodes().forEach(changedNodes::addEvent);
             neo4jService.getChangedRelationships().forEach(changedRelationships::addEvent);
@@ -118,6 +119,7 @@ public class SnowGraph {
                     | IllegalAccessException
                     | ClassNotFoundException
                     | ClassCastException e) {
+                    logger.error("Could not initialize plugin!", e);
                     throw DependenceException.initializeError(pluginConfig.getPath());
                 }
             }
