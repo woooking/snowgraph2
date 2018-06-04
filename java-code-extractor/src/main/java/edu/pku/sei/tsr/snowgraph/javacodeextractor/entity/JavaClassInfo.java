@@ -1,9 +1,9 @@
 package edu.pku.sei.tsr.snowgraph.javacodeextractor.entity;
 
 import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableMap;
+import edu.pku.sei.tsr.snowgraph.api.neo4j.Neo4jService;
 import edu.pku.sei.tsr.snowgraph.javacodeextractor.JavaCodeGraphBuilder;
-import org.neo4j.graphdb.GraphDatabaseService;
-import org.neo4j.graphdb.Node;
 
 public class JavaClassInfo {
 
@@ -18,9 +18,9 @@ public class JavaClassInfo {
 
     private final String superClassType;
     private final String superInterfaceTypes;
-    private Node node;
+    private long nodeId;
 
-    public JavaClassInfo(String name, String fullName, boolean isInterface, String visibility, boolean isAbstract, boolean isFinal, String comment, String content, String superClassType, String superInterfaceTypes) {
+    public JavaClassInfo(Neo4jService db, String name, String fullName, boolean isInterface, String visibility, boolean isAbstract, boolean isFinal, String comment, String content, String superClassType, String superInterfaceTypes) {
         Preconditions.checkArgument(name != null);
         this.name = name;
         Preconditions.checkArgument(fullName != null);
@@ -38,20 +38,22 @@ public class JavaClassInfo {
         this.superClassType = superClassType;
         Preconditions.checkArgument(superInterfaceTypes != null);
         this.superInterfaceTypes = superInterfaceTypes;
+        nodeId = createNode(db);
     }
 
-    private Node createNode(GraphDatabaseService db) {
-        Node node = db.createNode(JavaCodeGraphBuilder.CLASS);
-        node.setProperty(JavaCodeGraphBuilder.NAME, name);
-        node.setProperty(JavaCodeGraphBuilder.NAME, name);
-        node.setProperty(JavaCodeGraphBuilder.FULLNAME, fullName);
-        node.setProperty(JavaCodeGraphBuilder.IS_INTERFACE, isInterface);
-        node.setProperty(JavaCodeGraphBuilder.VISIBILITY, visibility);
-        node.setProperty(JavaCodeGraphBuilder.IS_ABSTRACT, isAbstract);
-        node.setProperty(JavaCodeGraphBuilder.IS_FINAL, isFinal);
-        node.setProperty(JavaCodeGraphBuilder.COMMENT, comment);
-        node.setProperty(JavaCodeGraphBuilder.CONTENT, content);
-        return node;
+    private long createNode(Neo4jService db) {
+        var properties = ImmutableMap.<String, Object>builder()
+            .put(JavaCodeGraphBuilder.NAME, name)
+            .put(JavaCodeGraphBuilder.FULLNAME, fullName)
+            .put(JavaCodeGraphBuilder.IS_INTERFACE, isInterface)
+            .put(JavaCodeGraphBuilder.VISIBILITY, visibility)
+            .put(JavaCodeGraphBuilder.IS_ABSTRACT, isAbstract)
+            .put(JavaCodeGraphBuilder.IS_FINAL, isFinal)
+            .put(JavaCodeGraphBuilder.COMMENT, comment)
+            .put(JavaCodeGraphBuilder.CONTENT, content)
+            .build();
+        nodeId = db.createNode(JavaCodeGraphBuilder.CLASS, properties).getId();
+        return nodeId;
     }
 
     public String getFullName() {
@@ -66,14 +68,7 @@ public class JavaClassInfo {
         return superInterfaceTypes;
     }
 
-    public Node getNode(GraphDatabaseService db) {
-        if (node == null) {
-            synchronized (this) {
-                if (node == null) {
-                    node = createNode(db);
-                }
-            }
-        }
-        return node;
+    public long getNodeId() {
+        return nodeId;
     }
 }

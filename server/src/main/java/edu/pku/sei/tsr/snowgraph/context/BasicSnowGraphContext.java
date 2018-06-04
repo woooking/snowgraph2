@@ -2,16 +2,13 @@ package edu.pku.sei.tsr.snowgraph.context;
 
 import edu.pku.sei.tsr.snowgraph.SnowGraph;
 import edu.pku.sei.tsr.snowgraph.SnowGraphPluginInfo;
+import edu.pku.sei.tsr.snowgraph.api.neo4j.Neo4jService;
 import edu.pku.sei.tsr.snowgraph.api.context.SnowGraphContext;
 import org.apache.commons.io.FileUtils;
-import org.neo4j.graphdb.GraphDatabaseService;
-import org.neo4j.graphdb.factory.GraphDatabaseBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.Closeable;
 import java.io.File;
-import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Collection;
@@ -21,13 +18,13 @@ public class BasicSnowGraphContext implements SnowGraphContext, AutoCloseable {
     private final SnowGraphPluginInfo pluginInfo;
     private final Logger logger;
     private final SnowGraph snowGraph;
-    private final GraphDatabaseService databaseService;
+    private final Neo4jService neo4jService;
 
-    public BasicSnowGraphContext(SnowGraph snowGraph, SnowGraphPluginInfo pluginInfo, GraphDatabaseBuilder databaseBuilder) {
+    public BasicSnowGraphContext(SnowGraph snowGraph, SnowGraphPluginInfo pluginInfo, Neo4jService neo4jService) {
         this.snowGraph = snowGraph;
         this.pluginInfo = pluginInfo;
         this.logger = LoggerFactory.getLogger(pluginInfo.getInstance().getClass());
-        this.databaseService = databaseBuilder.newGraphDatabase();
+        this.neo4jService = neo4jService;
     }
 
     @Override
@@ -36,7 +33,7 @@ public class BasicSnowGraphContext implements SnowGraphContext, AutoCloseable {
 
         return this.pluginInfo.getDataPaths().stream()
             .map(dataRoot::resolve)
-            .flatMap(p -> FileUtils.listFiles(p.toFile(), null, true).stream())
+            .map(Path::toFile)
             .collect(Collectors.toList());
     }
 
@@ -46,12 +43,12 @@ public class BasicSnowGraphContext implements SnowGraphContext, AutoCloseable {
     }
 
     @Override
-    public GraphDatabaseService getDatabaseService() {
-        return databaseService;
+    public Neo4jService getNeo4jService() {
+        return neo4jService;
     }
 
     @Override
     public void close() {
-        databaseService.shutdown();
+        neo4jService.close();
     }
 }

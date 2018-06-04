@@ -1,9 +1,9 @@
 package edu.pku.sei.tsr.snowgraph.javacodeextractor.entity;
 
 import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableMap;
+import edu.pku.sei.tsr.snowgraph.api.neo4j.Neo4jService;
 import edu.pku.sei.tsr.snowgraph.javacodeextractor.JavaCodeGraphBuilder;
-import org.neo4j.graphdb.GraphDatabaseService;
-import org.neo4j.graphdb.Node;
 
 public class JavaFieldInfo {
 
@@ -17,9 +17,9 @@ public class JavaFieldInfo {
 
     private String belongTo;
     private String fullType;
-    private Node node;
+    private long nodeId;
 
-    public JavaFieldInfo(String name, String fullName, String type, String visibility, boolean isStatic, boolean isFinal, String comment, String belongTo, String fullType) {
+    public JavaFieldInfo(Neo4jService db, String name, String fullName, String type, String visibility, boolean isStatic, boolean isFinal, String comment, String belongTo, String fullType) {
         Preconditions.checkArgument(name != null);
         this.name = name;
         Preconditions.checkArgument(fullName != null);
@@ -36,18 +36,22 @@ public class JavaFieldInfo {
         this.belongTo = belongTo;
         Preconditions.checkArgument(fullType != null);
         this.fullType = fullType;
+        nodeId = createNode(db);
     }
 
-    private Node createNode(GraphDatabaseService db) {
-        Node node = db.createNode(JavaCodeGraphBuilder.FIELD);
-        node.setProperty(JavaCodeGraphBuilder.NAME, name);
-        node.setProperty(JavaCodeGraphBuilder.FULLNAME, fullName);
-        node.setProperty(JavaCodeGraphBuilder.TYPE_STR, type);
-        node.setProperty(JavaCodeGraphBuilder.VISIBILITY, visibility);
-        node.setProperty(JavaCodeGraphBuilder.IS_STATIC, isStatic);
-        node.setProperty(JavaCodeGraphBuilder.IS_FINAL, isFinal);
-        node.setProperty(JavaCodeGraphBuilder.COMMENT, comment);
-        return node;
+    private long createNode(Neo4jService db) {
+        var properties = ImmutableMap.<String, Object>builder()
+            .put(JavaCodeGraphBuilder.NAME, name)
+            .put(JavaCodeGraphBuilder.FULLNAME, fullName)
+            .put(JavaCodeGraphBuilder.TYPE_STR, type)
+            .put(JavaCodeGraphBuilder.VISIBILITY, visibility)
+            .put(JavaCodeGraphBuilder.IS_STATIC, isStatic)
+            .put(JavaCodeGraphBuilder.IS_FINAL, isFinal)
+            .put(JavaCodeGraphBuilder.COMMENT, comment)
+            .build();
+        nodeId = db.createNode(JavaCodeGraphBuilder.FIELD, properties).getId();
+        return nodeId;
+
     }
 
     public String getFullName() {
@@ -62,14 +66,7 @@ public class JavaFieldInfo {
         return fullType;
     }
 
-    public Node getNode(GraphDatabaseService db) {
-        if (node == null) {
-            synchronized (this) {
-                if (node == null) {
-                    node = createNode(db);
-                }
-            }
-        }
-        return node;
+    public long getNodeId() {
+        return nodeId;
     }
 }

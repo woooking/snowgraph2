@@ -7,4 +7,6 @@ dependencies {
     compile group: 'org.neo4j', name: 'neo4j', version: '3.3.5'
     compile group: 'com.hankcs', name: 'hanlp', version: 'portable-1.6.4'
     compile project(':api')
+
+    testCompile group: 'junit', name: 'junit', version: '4.12'
 }

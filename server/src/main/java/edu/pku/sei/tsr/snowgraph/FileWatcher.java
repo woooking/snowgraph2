@@ -1,8 +1,7 @@
 package edu.pku.sei.tsr.snowgraph;
 
 import com.google.common.collect.Lists;
-import edu.pku.sei.tsr.snowgraph.api.ChangeEvent;
-import org.reactivestreams.Publisher;
+import edu.pku.sei.tsr.snowgraph.api.event.ChangeEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import reactor.core.publisher.Flux;

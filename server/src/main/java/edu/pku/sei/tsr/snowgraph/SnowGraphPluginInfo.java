@@ -1,6 +1,6 @@
 package edu.pku.sei.tsr.snowgraph;
 
-import edu.pku.sei.tsr.snowgraph.api.ChangeEvent;
+import edu.pku.sei.tsr.snowgraph.api.event.ChangeEvent;
 import edu.pku.sei.tsr.snowgraph.api.context.SnowGraphContext;
 import edu.pku.sei.tsr.snowgraph.api.plugin.SnowGraphPlugin;
 import org.reactivestreams.Subscriber;
@@ -9,7 +9,7 @@ import reactor.core.publisher.BaseSubscriber;
 
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.Collections;
+import java.util.Collection;
 import java.util.List;
 
 public class SnowGraphPluginInfo {
@@ -46,6 +46,10 @@ public class SnowGraphPluginInfo {
 
     public void run(SnowGraphContext context) {
         instance.run(context);
+    }
+
+    public void update(SnowGraphContext context, Collection<ChangeEvent<Path>> changedFiles, Collection<ChangeEvent<Long>> changedNodes, Collection<ChangeEvent<Long>> changedRelationships) {
+        instance.update(context, changedFiles, changedNodes, changedRelationships);
     }
 
     public Subscriber<ChangeEvent<Path>> subcriber() {
