@@ -14,8 +14,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class SnowGraphManager implements SnowGraphRepository, InitializingBean, DisposableBean {
-    @Autowired
-    private SnowGraphPersistence snowGraphPersistence;
+    @Autowired private SnowGraphPersistence snowGraphPersistence;
 
     private List<SnowGraph> graphs = new ArrayList<>();
 

@@ -9,6 +9,7 @@ import edu.pku.sei.tsr.snowgraph.exception.DependenceException;
 import edu.pku.sei.tsr.snowgraph.neo4j.BasicNeo4jService;
 import edu.pku.sei.tsr.snowgraph.neo4j.ChangeEventNeo4jService;
 import edu.pku.sei.tsr.snowgraph.registry.*;
+import lombok.Getter;
 import org.apache.commons.lang3.tuple.Pair;
 import org.neo4j.graphdb.factory.GraphDatabaseBuilder;
 import org.neo4j.graphdb.factory.GraphDatabaseFactory;
@@ -29,16 +30,16 @@ import java.util.function.Function;
 public class SnowGraph {
     private static Logger logger = LoggerFactory.getLogger(SnowGraph.class);
 
-    private final String name;
-    private final String dataDir;
-    private final String destination;
-    private final Date createTime;
+    @Getter private final String name;
+    @Getter private final String dataDir;
+    @Getter private final String destination;
+    @Getter private final Date createTime;
     private final DependencyGraph dependencyGraph;
     private final FileWatcher fileWatcher;
     private final SnowGraphUpdater updater;
-    private final GraphDatabaseBuilder databaseBuilder;
+    @Getter private final GraphDatabaseBuilder databaseBuilder;
 
-    private Date updateTime;
+    @Getter private Date updateTime;
 
     private SnowGraph(String name, String dataDir, String destination, DependencyGraph dependencyGraph, Date createTime, Date updateTime) {
         this.name = name;
@@ -52,32 +53,8 @@ public class SnowGraph {
         this.updateTime = updateTime;
     }
 
-    public String getName() {
-        return name;
-    }
-
-    public String getDataDir() {
-        return dataDir;
-    }
-
-    public String getDestination() {
-        return destination;
-    }
-
-    public GraphDatabaseBuilder getDatabaseBuilder() {
-        return databaseBuilder;
-    }
-
     public List<SnowGraphPluginInfo> getPluginInfos() {
         return ImmutableList.copyOf(dependencyGraph.getSortedPlugins());
-    }
-
-    public Date getCreateTime() {
-        return createTime;
-    }
-
-    public Date getUpdateTime() {
-        return updateTime;
     }
 
     private void watchFile() {

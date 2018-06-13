@@ -12,7 +12,6 @@ import java.util.HashMap;
 import java.util.List;
 
 public class SnowGraphUpdater extends BaseSubscriber<List<ChangeEvent<Path>>> {
-    private static Logger logger = LoggerFactory.getLogger(SnowGraphUpdater.class);
 
     @Override
     protected void hookOnSubscribe(Subscription subscription) {
