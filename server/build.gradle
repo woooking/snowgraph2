@@ -1,11 +1,17 @@
 plugins {
     id 'org.springframework.boot' version '2.0.2.RELEASE'
+    id 'io.franzbecker.gradle-lombok' version '1.14'
 }
 
 apply plugin: 'application'
 apply plugin: 'io.spring.dependency-management'
 
 mainClassName = 'edu.pku.sei.tsr.snowgraph.SnowGraphApplication'
+
+lombok {
+    version = "1.18.0"
+    sha256 = ""
+}
 
 dependencies {
     compile 'org.springframework.boot:spring-boot-starter-webflux'
@@ -26,4 +32,7 @@ dependencies {
     testCompile project(':jira-extractor')
 
     runtime group: 'org.neo4j', name: 'neo4j-ogm-embedded-driver', version: '3.1.0'
+    runtime project(':java-code-extractor')
+    runtime project(':code-tokenizer')
+    runtime project(':jira-extractor')
 }

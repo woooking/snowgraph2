@@ -66,7 +66,12 @@ public class GraphController {
 
     @PostMapping("/graphs")
     public Mono<SnowGraph> build(@RequestBody Mono<CreateGraphParam> paramMono) {
-        return paramMono.map(param -> new SnowGraph.Builder(param.getName(), param.getSrcDir(), param.getDestination(), param.getPluginConfigs()).build());
+        return paramMono.flatMap(param -> snowGraphRepository.createGraph(
+            param.getName(),
+            param.getSrcDir(),
+            param.getDestination(),
+            param.getPluginConfigs()
+        ));
     }
 
 

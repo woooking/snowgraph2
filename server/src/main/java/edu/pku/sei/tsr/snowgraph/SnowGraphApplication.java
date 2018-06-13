@@ -1,7 +1,7 @@
 package edu.pku.sei.tsr.snowgraph;
 
-import edu.pku.sei.tsr.snowgraph.repository.SnowGraphRepository;
-import edu.pku.sei.tsr.snowgraph.webflux.serializer.SnowGraphSerializer;
+import edu.pku.sei.tsr.snowgraph.serializer.SnowGraphDeserializer;
+import edu.pku.sei.tsr.snowgraph.serializer.SnowGraphSerializer;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
@@ -16,24 +16,20 @@ public class SnowGraphApplication {
     @Primary
     public Jackson2ObjectMapperBuilder jackson2ObjectMapperBuilder() {
         return Jackson2ObjectMapperBuilder.json()
-            .serializers(new SnowGraphSerializer());
+            .serializers(new SnowGraphSerializer())
+            .deserializers(new SnowGraphDeserializer());
     }
 
     @Bean
     @Scope("singleton")
-    public SnowGraphConfig snowGraphConfig() {
-        return new SnowGraphConfig();
+    public SnowGraphPersistence snowGraphPersistence() {
+        return new SnowGraphPersistence();
     }
 
     @Bean
     @Scope("singleton")
     public SnowGraphManager snowGraphManager() {
         return new SnowGraphManager();
-    }
-
-    @Bean
-    public SnowGraphRepository snowGraphRepository() {
-        return snowGraphManager();
     }
 
     public static void main(String[] args) {

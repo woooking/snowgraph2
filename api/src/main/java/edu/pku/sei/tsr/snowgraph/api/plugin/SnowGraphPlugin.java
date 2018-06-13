@@ -3,6 +3,8 @@ package edu.pku.sei.tsr.snowgraph.api.plugin;
 import edu.pku.sei.tsr.snowgraph.api.*;
 import edu.pku.sei.tsr.snowgraph.api.context.SnowGraphContext;
 import edu.pku.sei.tsr.snowgraph.api.event.ChangeEvent;
+import edu.pku.sei.tsr.snowgraph.api.event.LoadEvent;
+import edu.pku.sei.tsr.snowgraph.api.event.ShutDownEvent;
 
 import java.nio.file.Path;
 import java.util.Collection;
@@ -25,6 +27,10 @@ public interface SnowGraphPlugin {
     void init(InitRegistry initRegistry);
 
     void postInit(PostInitRegistry postInitRegistry);
+
+    void onLoad(LoadEvent event);
+
+    void onShutDown(ShutDownEvent event);
 
     void run(SnowGraphContext context);
 

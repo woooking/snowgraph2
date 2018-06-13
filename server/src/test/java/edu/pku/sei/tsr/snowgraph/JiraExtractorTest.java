@@ -37,7 +37,7 @@ public class JiraExtractorTest {
         jiraExtractor.setPath("edu.pku.sei.tsr.snowgraph.jiraextractor.JiraExtractor");
         jiraExtractor.setArgs(List.of("jira"));
 
-        snowGraph = new SnowGraph.Builder("nutch", NUTCH_LOCATION, DB_LOCATION, Collections.singletonList(jiraExtractor)).build();
+        snowGraph = new SnowGraph.Builder("nutch", NUTCH_LOCATION, DB_LOCATION, Collections.singletonList(jiraExtractor), false).build();
     }
 
     @Before
