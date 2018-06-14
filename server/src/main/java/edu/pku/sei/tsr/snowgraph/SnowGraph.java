@@ -15,6 +15,7 @@ import org.neo4j.graphdb.factory.GraphDatabaseBuilder;
 import org.neo4j.graphdb.factory.GraphDatabaseFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import reactor.core.scheduler.Schedulers;
 
 import java.io.File;
@@ -41,7 +42,7 @@ public class SnowGraph {
 
     @Getter private Date updateTime;
 
-    private SnowGraph(String name, String dataDir, String destination, DependencyGraph dependencyGraph, Date createTime, Date updateTime) {
+    SnowGraph(String name, String dataDir, String destination, DependencyGraph dependencyGraph, Date createTime, Date updateTime) {
         this.name = name;
         this.dataDir = dataDir;
         this.destination = destination;
@@ -57,7 +58,7 @@ public class SnowGraph {
         return ImmutableList.copyOf(dependencyGraph.getSortedPlugins());
     }
 
-    private void watchFile() {
+    void watchFile() {
         var publisher = fileWatcher.getPublisher();
         publisher.publishOn(Schedulers.elastic()).subscribe(updater);
     }
@@ -81,104 +82,4 @@ public class SnowGraph {
         return Pair.of(changedNodes, changedRelationships);
     }
 
-    public static class Builder implements org.apache.commons.lang3.builder.Builder<SnowGraph> {
-        private static Logger logger = LoggerFactory.getLogger(SnowGraph.Builder.class);
-
-        private final String name;
-        private final String dataDir;
-        private final String destination;
-        private final Map<String, SnowGraphPluginInfo> plugins;
-        private final boolean load;
-        private final Date createTime;
-        private final Date updateTime;
-
-        public Builder(String name, String dataDir, String destination, List<SnowGraphPluginConfig> pluginConfigs) {
-            this.name = name;
-            this.dataDir = dataDir;
-            this.destination = destination;
-            this.plugins = createPlugins(pluginConfigs);
-            this.load = false;
-            this.createTime = new Date();
-            this.updateTime = this.createTime;
-        }
-
-        public Builder(String name, String dataDir, String destination, List<SnowGraphPluginConfig> pluginConfigs, Date createTime, Date updateTime) {
-            this.name = name;
-            this.dataDir = dataDir;
-            this.destination = destination;
-            this.plugins = createPlugins(pluginConfigs);
-            this.load = true;
-            this.createTime = createTime;
-            this.updateTime = updateTime;
-        }
-
-        private static Map<String, SnowGraphPluginInfo> createPlugins(List<SnowGraphPluginConfig> pluginConfigs) {
-            var plugins = new HashMap<String, SnowGraphPluginInfo>();
-            for (SnowGraphPluginConfig pluginConfig : pluginConfigs) {
-                try {
-                    var instance = (SnowGraphPlugin) Class.forName(pluginConfig.getPath()).getConstructor().newInstance();
-                    plugins.put(pluginConfig.getPath(), new SnowGraphPluginInfo(pluginConfig, instance));
-                } catch (InstantiationException
-                    | InvocationTargetException
-                    | NoSuchMethodException
-                    | IllegalAccessException
-                    | ClassNotFoundException
-                    | ClassCastException e) {
-                    logger.error("Could not initialize plugin!", e);
-                    throw DependenceException.initializeError(pluginConfig.getPath());
-                }
-            }
-            return plugins;
-        }
-
-        private <T> void lifeCycle(Function<SnowGraphPlugin, Consumer<T>> func, LifeCycleRegistry<T> registry) {
-            plugins.values()
-                .stream()
-                .map(SnowGraphPluginInfo::getInstance)
-                .forEach(plugin -> func.apply(plugin).accept(registry.viewFor(plugin)));
-        }
-
-        private void preInit() {
-            var preInitRegistry = new SnowGraphPreInitRegistry(plugins);
-            lifeCycle(plugin -> plugin::preInit, preInitRegistry);
-        }
-
-        private void init() {
-            var initRegistry = new SnowGraphInitRegistry(plugins);
-            lifeCycle(plugin -> plugin::init, initRegistry);
-        }
-
-        private void postInit() {
-            var postInitRegistry = new SnowGraphPostInitRegistry(plugins);
-            lifeCycle(plugin -> plugin::postInit, postInitRegistry);
-        }
-
-        private void onLoad() {
-            var loadEventRegistry = new LoadEventRegistry(plugins);
-            lifeCycle(plugin -> plugin::onLoad, loadEventRegistry);
-        }
-
-        @Override
-        public SnowGraph build() {
-            preInit();
-            init();
-            postInit();
-            if (load) onLoad();
-            var dependencyGraph = new DependencyGraph(plugins.values());
-            var snowGraph = new SnowGraph(name, dataDir, destination, dependencyGraph, createTime, updateTime);
-            if (!load) {
-                dependencyGraph.getSortedPlugins().forEach(plugin -> {
-                    logger.info("{} started.", plugin.getInstance().getClass().getName());
-                    long startTime = System.currentTimeMillis();
-                    try (var context = new BasicSnowGraphContext(snowGraph, plugin, new BasicNeo4jService(snowGraph.getDatabaseBuilder().newGraphDatabase()))) {
-                        plugin.run(context);
-                    }
-                    long endTime = System.currentTimeMillis();
-                    logger.info("{} uses {} s.", plugin.getClass().getName(), (endTime - startTime) / 1000);
-                });
-            }
-            snowGraph.watchFile();
-            return snowGraph;
-        }
-    }
 }

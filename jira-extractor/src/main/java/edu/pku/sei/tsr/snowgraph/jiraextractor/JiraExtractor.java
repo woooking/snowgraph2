@@ -8,6 +8,7 @@ import edu.pku.sei.tsr.snowgraph.api.event.ChangeEvent;
 import edu.pku.sei.tsr.snowgraph.api.event.LoadEvent;
 import edu.pku.sei.tsr.snowgraph.api.event.ShutDownEvent;
 import edu.pku.sei.tsr.snowgraph.api.plugin.SnowGraphPlugin;
+import org.slf4j.Logger;
 
 import java.nio.file.Path;
 import java.util.Collection;
@@ -16,6 +17,7 @@ import java.util.List;
 @SuppressWarnings("unused")
 public class JiraExtractor implements SnowGraphPlugin {
     private String srcPath;
+    private Logger logger;
 
     @Override
     public List<String> dependsOn() {
@@ -40,6 +42,7 @@ public class JiraExtractor implements SnowGraphPlugin {
     @Override
     public void init(InitRegistry initRegistry) {
         this.srcPath = initRegistry.getArgs().get(0);
+        this.logger = initRegistry.getLogger();
     }
 
     @Override
@@ -59,7 +62,7 @@ public class JiraExtractor implements SnowGraphPlugin {
 
     @Override
     public void run(SnowGraphContext context) {
-        JiraGraphBuilder.process(context);
+        JiraGraphBuilder.process(context, logger);
     }
 
     @Override

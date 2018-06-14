@@ -16,14 +16,12 @@ import java.util.stream.Collectors;
 
 public class BasicSnowGraphContext implements SnowGraphContext, AutoCloseable {
     private final SnowGraphPluginInfo pluginInfo;
-    private final Logger logger;
     private final SnowGraph snowGraph;
     private final Neo4jService neo4jService;
 
     public BasicSnowGraphContext(SnowGraph snowGraph, SnowGraphPluginInfo pluginInfo, Neo4jService neo4jService) {
         this.snowGraph = snowGraph;
         this.pluginInfo = pluginInfo;
-        this.logger = LoggerFactory.getLogger(pluginInfo.getInstance().getClass());
         this.neo4jService = neo4jService;
     }
 
@@ -35,11 +33,6 @@ public class BasicSnowGraphContext implements SnowGraphContext, AutoCloseable {
             .map(dataRoot::resolve)
             .map(Path::toFile)
             .collect(Collectors.toList());
-    }
-
-    @Override
-    public Logger getLogger() {
-        return logger;
     }
 
     @Override

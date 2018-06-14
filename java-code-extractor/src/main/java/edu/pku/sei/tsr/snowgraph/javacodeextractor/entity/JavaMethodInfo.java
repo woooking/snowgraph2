@@ -4,11 +4,14 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
 import edu.pku.sei.tsr.snowgraph.api.neo4j.Neo4jService;
 import edu.pku.sei.tsr.snowgraph.javacodeextractor.JavaCodeGraphBuilder;
+import org.eclipse.jdt.core.dom.IBinding;
 import org.eclipse.jdt.core.dom.IMethodBinding;
 
+import java.io.Serializable;
 import java.util.Set;
+import java.util.stream.Collectors;
 
-public class JavaMethodInfo {
+public class JavaMethodInfo implements Serializable {
 
     private String name;
     private String fullName;
@@ -23,12 +26,12 @@ public class JavaMethodInfo {
     private String comment;
     private String params;
 
-    private IMethodBinding methodBinding;
+    private String methodBinding;
     private String fullReturnType;
     private String belongTo;
     private String fullParams;
     private String fullVariables;
-    private Set<IMethodBinding> methodCalls;
+    private Set<String> methodCalls;
     private String fieldAccesses;
     private String throwTypes;
     private long nodeId;
@@ -56,7 +59,7 @@ public class JavaMethodInfo {
         Preconditions.checkArgument(params != null);
         this.params = params;
         Preconditions.checkArgument(methodBinding != null);
-        this.methodBinding = methodBinding;
+        this.methodBinding = methodBinding.getKey();
         Preconditions.checkArgument(fullReturnType != null);
         this.fullReturnType = fullReturnType;
         Preconditions.checkArgument(belongTo != null);
@@ -66,7 +69,7 @@ public class JavaMethodInfo {
         Preconditions.checkArgument(fullVariables != null);
         this.fullVariables = fullVariables;
         Preconditions.checkArgument(methodCalls != null);
-        this.methodCalls = methodCalls;
+        this.methodCalls = methodCalls.stream().map(IBinding::getKey).collect(Collectors.toSet());
         Preconditions.checkArgument(fieldAccesses != null);
         this.fieldAccesses = fieldAccesses;
         Preconditions.checkArgument(throwTypes != null);
@@ -99,7 +102,7 @@ public class JavaMethodInfo {
         return fullName;
     }
 
-    public IMethodBinding getMethodBinding() {
+    public String getMethodBinding() {
         return methodBinding;
     }
 
@@ -123,7 +126,7 @@ public class JavaMethodInfo {
         return fullVariables;
     }
 
-    public Set<IMethodBinding> getMethodCalls() {
+    public Set<String> getMethodCalls() {
         return methodCalls;
     }
 

@@ -1,7 +1,5 @@
 package edu.pku.sei.tsr.snowgraph;
 
-import edu.pku.sei.tsr.snowgraph.api.event.ChangeEvent;
-import edu.pku.sei.tsr.snowgraph.javacodeextractor.JavaCodeGraphBuilder;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -11,7 +9,6 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.List;
@@ -37,7 +34,7 @@ public class JiraExtractorTest {
         jiraExtractor.setPath("edu.pku.sei.tsr.snowgraph.jiraextractor.JiraExtractor");
         jiraExtractor.setArgs(List.of("jira"));
 
-        snowGraph = new SnowGraph.Builder("nutch", NUTCH_LOCATION, DB_LOCATION, Collections.singletonList(jiraExtractor), false).build();
+        snowGraph = SnowGraphFactory.create("nutch", NUTCH_LOCATION, DB_LOCATION, Collections.singletonList(jiraExtractor));
     }
 
     @Before

@@ -1,15 +1,13 @@
 package edu.pku.sei.tsr.snowgraph;
 
-import edu.pku.sei.tsr.snowgraph.api.event.ShutDownEvent;
+import edu.pku.sei.tsr.snowgraph.registry.ShutDownEventRegistry;
 import edu.pku.sei.tsr.snowgraph.repository.SnowGraphRepository;
 import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.converter.json.Jackson2ObjectMapperBuilder;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -25,7 +23,7 @@ public class SnowGraphManager implements SnowGraphRepository, InitializingBean, 
 
     @Override
     public Mono<SnowGraph> createGraph(String name, String dataDir, String destination, List<SnowGraphPluginConfig> pluginConfigs) {
-        var graph = new SnowGraph.Builder(name, dataDir, destination, pluginConfigs).build();
+        var graph = SnowGraphFactory.create(name, dataDir, destination, pluginConfigs);
         graphs.add(graph);
         return Mono.just(graph);
     }
@@ -39,8 +37,8 @@ public class SnowGraphManager implements SnowGraphRepository, InitializingBean, 
     public void destroy() {
         graphs.forEach(graph -> {
             snowGraphPersistence.saveGraph(graph);
-            graph.getPluginInfos().forEach(p -> p.getInstance().onShutDown(new ShutDownEvent() {
-            }));
+            var shutDownEventRegistry = new ShutDownEventRegistry(SnowGraphPersistence.configDirPathOfGraph(graph));
+            graph.getPluginInfos().forEach(p -> p.getInstance().onShutDown(shutDownEventRegistry.viewFor(p.getInstance())));
         });
     }
 }

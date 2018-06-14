@@ -23,6 +23,11 @@ public class BasicNeo4jNode implements Neo4jNode {
     }
 
     @Override
+    public void delete() {
+        node.delete();
+    }
+
+    @Override
     public boolean hasLabel(String label) {
         return node.hasLabel(Label.label(label));
     }
@@ -55,6 +60,12 @@ public class BasicNeo4jNode implements Neo4jNode {
     @Override
     public Stream<Neo4jRelationship> getRelationships(String relationshipType, Direction direction) {
         return StreamSupport.stream(node.getRelationships(RelationshipType.withName(relationshipType), direction).spliterator(), false)
+            .map(BasicNeo4jRelationship::new);
+    }
+
+    @Override
+    public Stream<Neo4jRelationship> getRelationships() {
+        return StreamSupport.stream(node.getRelationships().spliterator(), false)
             .map(BasicNeo4jRelationship::new);
     }
 }

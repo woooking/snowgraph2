@@ -1,16 +1,22 @@
 package edu.pku.sei.tsr.snowgraph.javacodeextractor.entity;
 
+import com.google.common.collect.HashMultimap;
+import com.google.common.collect.Multimap;
+import edu.pku.sei.tsr.snowgraph.api.neo4j.Neo4jNode;
+import edu.pku.sei.tsr.snowgraph.api.neo4j.Neo4jRelationship;
 import edu.pku.sei.tsr.snowgraph.api.neo4j.Neo4jService;
 import edu.pku.sei.tsr.snowgraph.javacodeextractor.JavaCodeGraphBuilder;
 import org.eclipse.jdt.core.dom.IMethodBinding;
 
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.io.File;
+import java.io.Serializable;
+import java.util.*;
 
 
-public class JavaProjectInfo {
+public class JavaProjectInfo implements Serializable {
+    private Multimap<String, JavaClassInfo> classesInFile = HashMultimap.create();
+    private Multimap<String, JavaMethodInfo> methodsInFile = HashMultimap.create();
+    private Multimap<String, JavaFieldInfo> fieldsInFile = HashMultimap.create();
 
     private Map<String, JavaClassInfo> classInfoMap = new HashMap<>();
     private Map<String, JavaMethodInfo> methodInfoMap = new HashMap<>();
@@ -20,20 +26,50 @@ public class JavaProjectInfo {
     private Map<String, JavaMethodInfo> newMethodInfoMap = new HashMap<>();
     private Map<String, JavaFieldInfo> newFieldInfoMap = new HashMap<>();
 
-    private Map<IMethodBinding, JavaMethodInfo> methodBindingMap = new HashMap<>();
+    private Map<String, JavaMethodInfo> methodBindingMap = new HashMap<>();
 
-    private Map<IMethodBinding, JavaMethodInfo> newMethodBindingMap = new HashMap<>();
+    private void removeNode(Neo4jService db, long nodeId) {
+        var node = db.getNodeById(nodeId);
+        node.getRelationships().forEach(Neo4jRelationship::delete);
+        node.delete();
+    }
 
-    public void addClassInfo(JavaClassInfo info) {
+    public void removeFiles(Neo4jService db, Collection<File> deletedFiles) {
+        try(var tx = db.beginTx()) {
+            deletedFiles.forEach(deletedFile -> {
+                classesInFile.get(deletedFile.getPath()).forEach(info -> {
+                    classInfoMap.remove(info.getFullName());
+                    removeNode(db, info.getNodeId());
+                });
+                methodsInFile.get(deletedFile.getPath()).forEach(info -> {
+                    methodInfoMap.remove(info.getFullName());
+                    removeNode(db, info.getNodeId());
+                });
+                fieldsInFile.get(deletedFile.getPath()).forEach(info -> {
+                    fieldInfoMap.remove(info.getFullName());
+                    removeNode(db, info.getNodeId());
+                });
+                classesInFile.removeAll(deletedFile.getPath());
+                methodsInFile.removeAll(deletedFile.getPath());
+                fieldsInFile.removeAll(deletedFile.getPath());
+            });
+            tx.success();
+        }
+    }
+
+    public void addClassInfo(String path, JavaClassInfo info) {
+        classesInFile.put(path, info);
         newClassInfoMap.put(info.getFullName(), info);
     }
 
-    public void addMethodInfo(JavaMethodInfo info) {
+    public void addMethodInfo(String path, JavaMethodInfo info) {
+        methodsInFile.put(path, info);
         newMethodInfoMap.put(info.getFullName(), info);
-        newMethodBindingMap.put(info.getMethodBinding(), info);
+        methodBindingMap.put(info.getMethodBinding(), info);
     }
 
-    public void addFieldInfo(JavaFieldInfo info) {
+    public void addFieldInfo(String path, JavaFieldInfo info) {
+        fieldsInFile.put(path, info);
         newFieldInfoMap.put(info.getFullName(), info);
     }
 
@@ -51,7 +87,6 @@ public class JavaProjectInfo {
                 findJavaClassInfo(methodInfo.getFullVariables()).forEach(var -> db.createRelationship(methodInfo.getNodeId(), var.getNodeId(), JavaCodeGraphBuilder.VARIABLE_TYPE));
                 methodInfo.getMethodCalls().forEach(call -> {
                     if (methodBindingMap.containsKey(call)) db.createRelationship(methodInfo.getNodeId(), methodBindingMap.get(call).getNodeId(), JavaCodeGraphBuilder.METHOD_CALL);
-                    if (newMethodBindingMap.containsKey(call)) db.createRelationship(methodInfo.getNodeId(), newMethodBindingMap.get(call).getNodeId(), JavaCodeGraphBuilder.METHOD_CALL);
                 });
                 findJavaFieldInfo(methodInfo.getFieldAccesses()).forEach(access -> db.createRelationship(methodInfo.getNodeId(), access.getNodeId(), JavaCodeGraphBuilder.FIELD_ACCESS));
             });

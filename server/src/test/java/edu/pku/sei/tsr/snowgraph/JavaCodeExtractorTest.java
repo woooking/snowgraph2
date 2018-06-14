@@ -2,16 +2,17 @@ package edu.pku.sei.tsr.snowgraph;
 
 import edu.pku.sei.tsr.snowgraph.api.event.ChangeEvent;
 import edu.pku.sei.tsr.snowgraph.javacodeextractor.JavaCodeGraphBuilder;
+import org.apache.commons.lang3.tuple.Pair;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.Label;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import java.io.IOException;
 import java.nio.file.*;
-import java.nio.file.attribute.BasicFileAttributes;
 import java.util.Collections;
 import java.util.List;
 
@@ -41,7 +42,7 @@ public class JavaCodeExtractorTest {
         javaCodeExtractor.setPath("edu.pku.sei.tsr.snowgraph.javacodeextractor.JavaCodeExtractor");
         javaCodeExtractor.setArgs(List.of("sourcecode"));
 
-        snowGraph = new SnowGraph.Builder("nutch", NUTCH_LOCATION, DB_LOCATION, Collections.singletonList(javaCodeExtractor)).build();
+        snowGraph = SnowGraphFactory.create("nutch", NUTCH_LOCATION, DB_LOCATION, Collections.singletonList(javaCodeExtractor));
     }
 
     @Before
@@ -54,35 +55,45 @@ public class JavaCodeExtractorTest {
     @Test
     public void basicTest() {
         assertEquals("nutch", snowGraph.getName());
-        var db = snowGraph.getDatabaseBuilder().newGraphDatabase();
-
-        try (var tx = db.beginTx()) {
-            assertEquals(408, db.findNodes(Label.label(JavaCodeGraphBuilder.CLASS)).stream().count());
-            assertEquals(2377, db.findNodes(Label.label(JavaCodeGraphBuilder.METHOD)).stream().count());
-            assertEquals(1486, db.findNodes(Label.label(JavaCodeGraphBuilder.FIELD)).stream().count());
-            tx.success();
-        }
+        checkCount(408, 2377, 1486);
     }
 
     @Test
     public void fileChangeTest() throws IOException {
+        assertEquals("nutch", snowGraph.getName());
+        checkCount(408, 2377, 1486);
+
         var target = Files.copy(Paths.get(TEST_CODE_FILE), Paths.get(TEST_CODE_TARGET));
 
-        var changes = snowGraph.update(List.of(
+        var changes1 = snowGraph.update(List.of(
             new ChangeEvent<>(ChangeEvent.Type.CREATED, target)
         ));
 
-        var db = snowGraph.getDatabaseBuilder().newGraphDatabase();
-        try (var tx = db.beginTx()) {
-            assertEquals(409, db.findNodes(Label.label(JavaCodeGraphBuilder.CLASS)).stream().count());
-            assertEquals(2448, db.findNodes(Label.label(JavaCodeGraphBuilder.METHOD)).stream().count());
-            assertEquals(1500, db.findNodes(Label.label(JavaCodeGraphBuilder.FIELD)).stream().count());
-            tx.success();
-        }
+        checkCount(409, 2448, 1500);
 
-        assertEquals(1 + 71 + 14, changes.getLeft().getChanges().size());
-        assertEquals(126, changes.getRight().getChanges().size());
+        assertEquals(1 + 71 + 14, changes1.getLeft().getChanges().size());
+        assertEquals(128, changes1.getRight().getChanges().size());
 
         Files.delete(target);
+
+        var changes2 = snowGraph.update(List.of(
+            new ChangeEvent<>(ChangeEvent.Type.DELETED, target)
+        ));
+
+        checkCount(408, 2377, 1486);
+
+        assertEquals(1 + 71 + 14, changes2.getLeft().getChanges().size());
+        assertEquals(128, changes2.getRight().getChanges().size());
+    }
+
+    private void checkCount(int expectedClassNum, int expectedMethodNum, int expectedFieldNum) {
+        var db = snowGraph.getDatabaseBuilder().newGraphDatabase();
+        try (var tx = db.beginTx()) {
+            assertEquals(expectedClassNum, db.findNodes(Label.label(JavaCodeGraphBuilder.CLASS)).stream().count());
+            assertEquals(expectedMethodNum, db.findNodes(Label.label(JavaCodeGraphBuilder.METHOD)).stream().count());
+            assertEquals(expectedFieldNum, db.findNodes(Label.label(JavaCodeGraphBuilder.FIELD)).stream().count());
+            tx.success();
+        }
+        db.shutdown();
     }
 }

@@ -1,5 +1,6 @@
 package edu.pku.sei.tsr.snowgraph;
 
+import edu.pku.sei.tsr.snowgraph.util.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
@@ -17,35 +18,36 @@ import java.util.stream.Collectors;
 public class SnowGraphPersistence implements InitializingBean {
     private static Logger logger = LoggerFactory.getLogger(SnowGraphPersistence.class);
 
+    private static Path configDirPath = Paths.get(System.getProperty("user.home")).resolve(".snowgraph");
+
+    public static Path configDirPathOfGraph(SnowGraph graph) {
+        return configDirPath.resolve(graph.getName());
+    }
+
     @Autowired
     private Jackson2ObjectMapperBuilder jackson2ObjectMapperBuilder;
 
-    private Path configDirPath = Paths.get(System.getProperty("user.home")).resolve(".snowgraph");
-
     @Override
     public void afterPropertiesSet() {
-        var configDir = configDirPath.toFile();
-        if (!configDir.exists()) {
-            if (!configDir.mkdir()) {
-                logger.error("Could not create graph info dir!");
-            }
-        }
+        FileUtils.createDirectory(configDirPath);
     }
 
     public void saveGraph(SnowGraph graph) {
         var graphDirPath = configDirPath.resolve(graph.getName());
-        var graphDir = graphDirPath.toFile();
-        if (!graphDir.exists()) {
-            if (!graphDir.mkdir()) {
-                logger.error("Could not create graph info dir!");
-            }
-        }
+        FileUtils.createDirectory(graphDirPath);
         var objectMapper = jackson2ObjectMapperBuilder.build();
         var graphFile = graphDirPath.resolve("info.json").toFile();
         try {
             objectMapper.writeValue(graphFile, graph);
+            graph.getPluginInfos().stream()
+                .map(SnowGraphPluginInfo::getInstance)
+                .map(Object::getClass)
+                .map(Object::toString)
+                .map(graphDirPath::resolve)
+                .forEach(FileUtils::createDirectory);
         } catch (IOException e) {
-            e.printStackTrace();
+            logger.error("Error occurred when saving graph {}", graph.getName());
+            logger.error("", e);
         }
     }
 

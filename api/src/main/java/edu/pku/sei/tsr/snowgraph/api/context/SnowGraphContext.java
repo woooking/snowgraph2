@@ -9,7 +9,5 @@ import java.util.Collection;
 public interface SnowGraphContext {
     Collection<File> getData();
 
-    Logger getLogger();
-
     Neo4jService getNeo4jService();
 }

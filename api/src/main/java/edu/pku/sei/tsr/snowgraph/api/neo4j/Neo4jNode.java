@@ -8,6 +8,8 @@ public interface Neo4jNode {
 
     long getId();
 
+    void delete();
+
     boolean hasLabel(String label);
 
     boolean hasProperty(String property);
@@ -21,4 +23,6 @@ public interface Neo4jNode {
     boolean hasRelationship(String relationshipType, Direction direction);
 
     Stream<Neo4jRelationship> getRelationships(String relationshipType, Direction direction);
+
+    Stream<Neo4jRelationship> getRelationships();
 }

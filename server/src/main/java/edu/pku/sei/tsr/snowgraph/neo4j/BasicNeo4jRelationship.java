@@ -20,6 +20,11 @@ public class BasicNeo4jRelationship implements Neo4jRelationship {
     }
 
     @Override
+    public void delete() {
+        relationship.delete();
+    }
+
+    @Override
     public Neo4jNode getStartNode() {
         return new BasicNeo4jNode(relationship.getStartNode());
     }

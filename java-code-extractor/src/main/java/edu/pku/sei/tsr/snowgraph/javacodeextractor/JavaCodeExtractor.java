@@ -39,7 +39,7 @@ public class JavaCodeExtractor implements SnowGraphPlugin {
     @Override
     public void init(InitRegistry initRegistry) {
         this.srcPath = initRegistry.getArgs().get(0);
-        this.graphBuilder = new JavaCodeGraphBuilder();
+        this.graphBuilder = new JavaCodeGraphBuilder(initRegistry.getLogger());
     }
 
     @Override
@@ -49,12 +49,16 @@ public class JavaCodeExtractor implements SnowGraphPlugin {
 
     @Override
     public void onLoad(LoadEvent event) {
-
+        var pluginConfigDirPath = event.getConfigDirPath();
+        var projectFile = pluginConfigDirPath.resolve("project").toFile();
+        graphBuilder.onLoad(projectFile);
     }
 
     @Override
     public void onShutDown(ShutDownEvent event) {
-
+        var pluginConfigDirPath = event.getConfigDirPath();
+        var projectFile = pluginConfigDirPath.resolve("project").toFile();
+        graphBuilder.onSave(projectFile);
     }
 
     @Override

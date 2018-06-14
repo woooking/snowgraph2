@@ -10,21 +10,16 @@ import org.eclipse.jdt.core.dom.AST;
 import org.eclipse.jdt.core.dom.ASTParser;
 import org.eclipse.jdt.core.dom.CompilationUnit;
 import org.eclipse.jdt.core.dom.FileASTRequestor;
-import org.neo4j.graphdb.Label;
 import org.neo4j.graphdb.RelationshipType;
+import org.slf4j.Logger;
 
-import java.io.File;
-import java.io.FileFilter;
-import java.io.IOException;
+import java.io.*;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import static java.util.stream.Collectors.groupingBy;
-import static java.util.stream.Collectors.mapping;
-import static java.util.stream.Collectors.toList;
-import static java.util.stream.Collectors.toSet;
+import static java.util.stream.Collectors.*;
 
 /**
  * 解析java源代码，抽取出代码实体以及这些代码实体之间的静态依赖关系，并将它们存储到neo4j图数据库中。
@@ -76,14 +71,17 @@ public class JavaCodeGraphBuilder {
     public static final String IS_CONSTRUCTOR="isConstructor";
     public static final String IS_STATIC="isStatic";
     public static final String IS_SYNCHRONIZED="isSynchronized";
+    private static FileFilter javaFileFilter = new SuffixFileFilter(new String[]{".java"});
 
-    private FileFilter javaFileFilter = new SuffixFileFilter(new String[]{".java"});
+    private final Logger logger;
+
     private JavaProjectInfo javaProjectInfo;
     private Set<String> srcPathSet = new HashSet<>();
     private Set<String> srcFolderSet = new HashSet<>();
 
-    JavaCodeGraphBuilder() {
-        javaProjectInfo = new JavaProjectInfo();
+    JavaCodeGraphBuilder(Logger logger) {
+        this.logger = logger;
+        this.javaProjectInfo = new JavaProjectInfo();
     }
 
     void process(Neo4jService db, Collection<File> files) {
@@ -100,7 +98,32 @@ public class JavaCodeGraphBuilder {
                     mapping(Function.<ChangeEvent<Path>>identity().andThen(ChangeEvent::getInstance).andThen(Path::toFile), toList())
                 )
             );
-        onFilesCreated(db, events.get(ChangeEvent.Type.CREATED));
+        if (events.containsKey(ChangeEvent.Type.CREATED)) onFilesCreated(db, events.get(ChangeEvent.Type.CREATED));
+        if (events.containsKey(ChangeEvent.Type.DELETED)) onFilesDeleted(db, events.get(ChangeEvent.Type.DELETED));
+        // TODO: MODIFIED
+    }
+
+    @SuppressWarnings("unchecked")
+    void onLoad(File saveFile) {
+        try (var ois = new ObjectInputStream(new FileInputStream(saveFile))) {
+            javaProjectInfo = (JavaProjectInfo) ois.readObject();
+            srcPathSet = (Set<String>) ois.readObject();
+            srcFolderSet = (Set<String>) ois.readObject();
+        } catch (FileNotFoundException e) {
+            // Do nothing
+        } catch (IOException | ClassNotFoundException e) {
+            logger.error("Error occurred when loading java project!", e);
+        }
+    }
+
+    void onSave(File saveFile) {
+        try (var oos = new ObjectOutputStream(new FileOutputStream(saveFile))) {
+            oos.writeObject(javaProjectInfo);
+            oos.writeObject(srcPathSet);
+            oos.writeObject(srcFolderSet);
+        } catch (IOException e) {
+            logger.error("Error occurred when saving java project!", e);
+        }
     }
 
     private void onFilesCreated(Neo4jService db, Collection<File> files) {
@@ -111,12 +134,10 @@ public class JavaCodeGraphBuilder {
         run(db, javaFiles);
     }
 
-    private void onFilesDeleted() {
-//        Collection<File> javaFiles = files.stream().filter(javaFileFilter::accept).collect(toList());
-//        srcPathSet.removeAll(javaFiles.stream().map(File::getAbsolutePath).collect(toSet()));
-//        srcFolderSet.removeAll(javaFiles.stream().map(File::getParentFile).map(File::getAbsolutePath).collect(toSet()));
-//        NameResolver.setSrcPathSet(srcPathSet);
-//        run(serviceFactory, javaFiles);
+    private void onFilesDeleted(Neo4jService db, Collection<File> files) {
+        Collection<File> javaFiles = files.stream().filter(javaFileFilter::accept).collect(toList());
+        srcPathSet.removeAll(javaFiles.stream().map(File::getAbsolutePath).collect(toSet()));
+        javaProjectInfo.removeFiles(db, files);
     }
 
     private void run(Neo4jService db, Collection<File> files) {
@@ -140,9 +161,9 @@ public class JavaCodeGraphBuilder {
                 @Override
                 public void acceptAST(String sourceFilePath, CompilationUnit javaUnit) {
                     try {
-                        javaUnit.accept(new JavaASTVisitor(db, javaProjectInfo, FileUtils.readFileToString(new File(sourceFilePath), "utf-8")));
+                        javaUnit.accept(new JavaASTVisitor(db, javaProjectInfo, FileUtils.readFileToString(new File(sourceFilePath), "utf-8"), sourceFilePath));
                     } catch (IOException e) {
-                        e.printStackTrace();
+                        logger.error("", e);
                     }
                 }
             }, null);
@@ -150,6 +171,7 @@ public class JavaCodeGraphBuilder {
         }
         javaProjectInfo.buildRelationsAndSave(db);
     }
+
 }
 
 

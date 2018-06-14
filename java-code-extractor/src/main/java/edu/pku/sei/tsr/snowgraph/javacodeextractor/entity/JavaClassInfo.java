@@ -5,7 +5,9 @@ import com.google.common.collect.ImmutableMap;
 import edu.pku.sei.tsr.snowgraph.api.neo4j.Neo4jService;
 import edu.pku.sei.tsr.snowgraph.javacodeextractor.JavaCodeGraphBuilder;
 
-public class JavaClassInfo {
+import java.io.Serializable;
+
+public class JavaClassInfo implements Serializable {
 
     private final String name;
     private final String fullName;

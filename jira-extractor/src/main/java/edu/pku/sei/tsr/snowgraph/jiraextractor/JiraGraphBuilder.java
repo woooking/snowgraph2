@@ -97,9 +97,9 @@ public class JiraGraphBuilder {
         this.logger = logger;
     }
 
-    public static void process(SnowGraphContext context) throws JSONException {
+    public static void process(SnowGraphContext context, Logger logger) throws JSONException {
         var files = context.getData();
-        new JiraGraphBuilder(context.getNeo4jService(), context.getLogger()).run(files);
+        new JiraGraphBuilder(context.getNeo4jService(), logger).run(files);
     }
 
     private Stream<Path> safeList(Path dir) {

@@ -4,5 +4,7 @@ public interface Neo4jRelationship {
 
     long getId();
 
+    void delete();
+
     Neo4jNode getStartNode();
 }

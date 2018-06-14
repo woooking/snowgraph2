@@ -1,27 +1,24 @@
 package edu.pku.sei.tsr.snowgraph.serializer;
 
-import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationContext;
-import com.fasterxml.jackson.databind.SerializerProvider;
 import com.fasterxml.jackson.databind.deser.std.StdDeserializer;
 import com.fasterxml.jackson.databind.node.ArrayNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.fasterxml.jackson.databind.node.POJONode;
 import com.fasterxml.jackson.databind.node.TextNode;
-import com.fasterxml.jackson.databind.ser.std.StdSerializer;
 import edu.pku.sei.tsr.snowgraph.SnowGraph;
+import edu.pku.sei.tsr.snowgraph.SnowGraphFactory;
 import edu.pku.sei.tsr.snowgraph.SnowGraphPluginConfig;
-import edu.pku.sei.tsr.snowgraph.SnowGraphPluginInfo;
+import org.springframework.beans.factory.annotation.Autowired;
 
-import javax.xml.transform.stream.StreamSource;
 import java.io.IOException;
 import java.util.Date;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
 public class SnowGraphDeserializer extends StdDeserializer<SnowGraph> {
+    @Autowired private SnowGraphFactory snowGraphFactory;
+
     public SnowGraphDeserializer() {
         super(SnowGraph.class);
     }
@@ -44,7 +41,7 @@ public class SnowGraphDeserializer extends StdDeserializer<SnowGraph> {
                 return null;
             }).collect(Collectors.toList());
 
-        return new SnowGraph.Builder(name, dataDir, destination, pluginInfos, createTime, updateTime).build();
+        return SnowGraphFactory.load(name, dataDir, destination, pluginInfos, createTime, updateTime);
     }
 
 }

@@ -36,17 +36,17 @@ public class ChangeEventNeo4jService implements Neo4jService {
 
     @Override
     public Neo4jNode getNodeById(long id) {
-        return new ChangeEventNeo4jNode(changedNodes, graphDatabaseService.getNodeById(id));
+        return new ChangeEventNeo4jNode(graphDatabaseService.getNodeById(id), changedNodes, changedRelationships);
     }
 
     @Override
     public Stream<Neo4jNode> getAllNodes() {
-        return graphDatabaseService.getAllNodes().stream().map(n -> new ChangeEventNeo4jNode(changedNodes, n));
+        return graphDatabaseService.getAllNodes().stream().map(n -> new ChangeEventNeo4jNode(n, changedNodes, changedRelationships));
     }
 
     @Override
     public Stream<Neo4jNode> findNodes(String label) {
-        return graphDatabaseService.findNodes(Label.label(label)).stream().map(n -> new ChangeEventNeo4jNode(changedNodes, n));
+        return graphDatabaseService.findNodes(Label.label(label)).stream().map(n -> new ChangeEventNeo4jNode(n, changedNodes, changedRelationships));
     }
 
     @Override
@@ -55,7 +55,7 @@ public class ChangeEventNeo4jService implements Neo4jService {
         properties.forEach(node::setProperty);
         var id = node.getId();
         changedNodes.addEvent(id, ChangeEvent.Type.CREATED);
-        return new ChangeEventNeo4jNode(changedNodes, node);
+        return new ChangeEventNeo4jNode(node, changedNodes, changedRelationships);
     }
 
     @Override
