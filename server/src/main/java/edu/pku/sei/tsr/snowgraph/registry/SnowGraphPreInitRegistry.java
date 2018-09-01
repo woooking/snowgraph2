@@ -5,6 +5,7 @@ import edu.pku.sei.tsr.snowgraph.api.PreInitRegistry;
 import edu.pku.sei.tsr.snowgraph.api.plugin.SnowGraphPlugin;
 
 import java.util.Map;
+import java.util.Set;
 
 public class SnowGraphPreInitRegistry implements LifeCycleRegistry<PreInitRegistry> {
     private final Map<String, SnowGraphPluginInfo> plugins;
@@ -16,6 +17,10 @@ public class SnowGraphPreInitRegistry implements LifeCycleRegistry<PreInitRegist
     @Override
     public PreInitRegistry viewFor(SnowGraphPlugin plugin) {
         return new PreInitRegistry() {
+            @Override
+            public Set<String> getPluginList() {
+                return plugins.keySet();
+            }
         };
     }
 }

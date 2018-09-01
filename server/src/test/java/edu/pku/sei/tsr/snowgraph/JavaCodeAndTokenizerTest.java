@@ -42,7 +42,7 @@ public class JavaCodeAndTokenizerTest {
         javaCodeExtractor.setPath("edu.pku.sei.tsr.snowgraph.javacodeextractor.JavaCodeExtractor");
         javaCodeExtractor.setArgs(List.of("sourcecode"));
 
-        snowGraph = SnowGraphFactory.create("nutch", NUTCH_LOCATION, DB_LOCATION, List.of(codeTokenizer, javaCodeExtractor));
+        snowGraph = SnowGraphFactory.createAndInit("nutch", NUTCH_LOCATION, DB_LOCATION, List.of(codeTokenizer, javaCodeExtractor));
     }
 
     @Before

@@ -16,7 +16,7 @@ public class FileWatcherTest {
 //        assertTrue(test2.createNewFile());
 //        assertTrue(test1.delete());
 //        assertTrue(test2.delete());
-//        StepVerifier.create(fileWatcher.getPublisher())
+//        StepVerifier.createAndInit(fileWatcher.getPublisher())
 //            .expectNext(new ChangeEvent<>(ChangeEvent.Type.CREATED, Paths.get("/home/woooking/lab/test/test1")))
 //            .expectNext(new ChangeEvent<>(ChangeEvent.Type.CREATED, Paths.get("/home/woooking/lab/test/test2")))
 //            .expectNext(new ChangeEvent<>(ChangeEvent.Type.DELETED, Paths.get("/home/woooking/lab/test/test1")))

@@ -23,7 +23,7 @@ public class SnowGraphManager implements SnowGraphRepository, InitializingBean, 
 
     @Override
     public Mono<SnowGraph> createGraph(String name, String dataDir, String destination, List<SnowGraphPluginConfig> pluginConfigs) {
-        var graph = SnowGraphFactory.create(name, dataDir, destination, pluginConfigs);
+        var graph = SnowGraphFactory.createAndInit(name, dataDir, destination, pluginConfigs);
         graphs.add(graph);
         return Mono.just(graph);
     }

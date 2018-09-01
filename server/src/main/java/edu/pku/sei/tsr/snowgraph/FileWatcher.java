@@ -94,7 +94,7 @@ public class FileWatcher {
     }
 
     private void processEvents(FluxSink<List<ChangeEvent<Path>>> sink) {
-        if (watcher == null) sink.error(new RuntimeException("Can not create watch service!"));
+        if (watcher == null) sink.error(new RuntimeException("Can not createAndInit watch service!"));
         for (; ; ) {
 
             WatchKey key;

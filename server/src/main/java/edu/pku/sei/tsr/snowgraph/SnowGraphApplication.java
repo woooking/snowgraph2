@@ -2,6 +2,7 @@ package edu.pku.sei.tsr.snowgraph;
 
 import edu.pku.sei.tsr.snowgraph.serializer.SnowGraphDeserializer;
 import edu.pku.sei.tsr.snowgraph.serializer.SnowGraphSerializer;
+import edu.pku.sei.tsr.snowgraph.web.websocket.UserSessionManager;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
@@ -30,6 +31,12 @@ public class SnowGraphApplication {
     @Scope("singleton")
     public SnowGraphManager snowGraphManager() {
         return new SnowGraphManager();
+    }
+
+    @Bean
+    @Scope("singleton")
+    public UserSessionManager userSessionManager() {
+        return new UserSessionManager();
     }
 
     public static void main(String[] args) {

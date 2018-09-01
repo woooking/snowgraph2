@@ -28,9 +28,11 @@ public interface SnowGraphPlugin {
 
     void postInit(PostInitRegistry postInitRegistry);
 
-    void onLoad(LoadEvent event);
+    default void onLoad(LoadEvent event) {
+    }
 
-    void onShutDown(ShutDownEvent event);
+    default void onShutDown(ShutDownEvent event) {
+    }
 
     void run(SnowGraphContext context);
 

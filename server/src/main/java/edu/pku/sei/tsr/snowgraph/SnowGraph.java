@@ -3,30 +3,21 @@ package edu.pku.sei.tsr.snowgraph;
 import com.google.common.collect.ImmutableList;
 import edu.pku.sei.tsr.snowgraph.api.event.ChangeEvent;
 import edu.pku.sei.tsr.snowgraph.api.event.ChangeEventManager;
-import edu.pku.sei.tsr.snowgraph.api.plugin.SnowGraphPlugin;
 import edu.pku.sei.tsr.snowgraph.context.BasicSnowGraphContext;
-import edu.pku.sei.tsr.snowgraph.exception.DependenceException;
 import edu.pku.sei.tsr.snowgraph.neo4j.BasicNeo4jService;
 import edu.pku.sei.tsr.snowgraph.neo4j.ChangeEventNeo4jService;
-import edu.pku.sei.tsr.snowgraph.registry.*;
 import lombok.Getter;
 import org.apache.commons.lang3.tuple.Pair;
 import org.neo4j.graphdb.factory.GraphDatabaseBuilder;
 import org.neo4j.graphdb.factory.GraphDatabaseFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import reactor.core.scheduler.Schedulers;
 
 import java.io.File;
-import java.lang.reflect.InvocationTargetException;
 import java.nio.file.Path;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.function.Consumer;
-import java.util.function.Function;
 
 public class SnowGraph {
     private static Logger logger = LoggerFactory.getLogger(SnowGraph.class);
@@ -52,6 +43,18 @@ public class SnowGraph {
         this.databaseBuilder = new GraphDatabaseFactory().newEmbeddedDatabaseBuilder(new File(destination));
         this.createTime = createTime;
         this.updateTime = updateTime;
+    }
+
+    public void init() {
+        dependencyGraph.getSortedPlugins().forEach(plugin -> {
+            logger.info("{} started.", plugin.getInstance().getClass().getName());
+            long startTime = System.currentTimeMillis();
+            try (var context = new BasicSnowGraphContext(this, plugin, new BasicNeo4jService(getDatabaseBuilder().newGraphDatabase()))) {
+                plugin.run(context);
+            }
+            long endTime = System.currentTimeMillis();
+            logger.info("{} uses {} s.", plugin.getClass().getName(), (endTime - startTime) / 1000);
+        });
     }
 
     public List<SnowGraphPluginInfo> getPluginInfos() {

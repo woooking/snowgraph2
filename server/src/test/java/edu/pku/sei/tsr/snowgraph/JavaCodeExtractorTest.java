@@ -2,11 +2,9 @@ package edu.pku.sei.tsr.snowgraph;
 
 import edu.pku.sei.tsr.snowgraph.api.event.ChangeEvent;
 import edu.pku.sei.tsr.snowgraph.javacodeextractor.JavaCodeGraphBuilder;
-import org.apache.commons.lang3.tuple.Pair;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.Label;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
@@ -42,7 +40,7 @@ public class JavaCodeExtractorTest {
         javaCodeExtractor.setPath("edu.pku.sei.tsr.snowgraph.javacodeextractor.JavaCodeExtractor");
         javaCodeExtractor.setArgs(List.of("sourcecode"));
 
-        snowGraph = SnowGraphFactory.create("nutch", NUTCH_LOCATION, DB_LOCATION, Collections.singletonList(javaCodeExtractor));
+        snowGraph = SnowGraphFactory.createAndInit("nutch", NUTCH_LOCATION, DB_LOCATION, Collections.singletonList(javaCodeExtractor));
     }
 
     @Before

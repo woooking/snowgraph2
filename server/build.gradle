@@ -14,10 +14,13 @@ lombok {
 }
 
 dependencies {
-    compile 'org.springframework.boot:spring-boot-starter-webflux'
+    compile 'org.springframework.boot:spring-boot-starter-web'
+    compile 'org.springframework.boot:spring-boot-starter-websocket'
+    compile 'org.springframework.boot:spring-boot-devtools'
     compile group: 'com.google.guava', name: 'guava', version: '25.0-jre'
     compile group: 'commons-io', name: 'commons-io', version: '2.6'
     compile group: 'org.neo4j', name: 'neo4j', version: '3.3.5'
+    compile group: 'io.projectreactor', name: 'reactor-core', version: '3.1.8.RELEASE'
     compile group: 'com.fasterxml.jackson.core', name: 'jackson-core', version: '2.9.5'
     compile group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: '2.9.5'
     compile group: 'com.fasterxml.jackson.dataformat', name: 'jackson-dataformat-yaml', version: '2.9.5'

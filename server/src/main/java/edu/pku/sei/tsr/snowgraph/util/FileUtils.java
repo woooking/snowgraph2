@@ -12,7 +12,7 @@ public class FileUtils {
     public static void createDirectory(File dir) {
         if (!dir.exists()) {
             if (!dir.mkdir()) {
-                logger.error("Could not create dir: {}!", dir.getName());
+                logger.error("Could not createAndInit dir: {}!", dir.getName());
             }
         }
     }

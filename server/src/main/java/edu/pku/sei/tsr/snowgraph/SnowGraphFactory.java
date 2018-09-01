@@ -23,12 +23,24 @@ public class SnowGraphFactory {
     public static SnowGraph create(String name, String dataDir, String destination, List<SnowGraphPluginConfig> pluginConfigs) {
         var plugins = createPlugins(pluginConfigs);
         var createTime = new Date();
-        return create(name, dataDir, destination, plugins, createTime, createTime, false);
+        return create(name, dataDir, destination, plugins, createTime, createTime);
+    }
+
+    public static SnowGraph createAndInit(String name, String dataDir, String destination, List<SnowGraphPluginConfig> pluginConfigs) {
+        var plugins = createPlugins(pluginConfigs);
+        var createTime = new Date();
+        var graph = create(name, dataDir, destination, plugins, createTime, createTime);
+        graph.init();
+        graph.watchFile();
+        return graph;
     }
 
     public static SnowGraph load(String name, String dataDir, String destination, List<SnowGraphPluginConfig> pluginConfigs, Date createTime, Date updateTime) {
         var plugins = createPlugins(pluginConfigs);
-        return create(name, dataDir, destination, plugins, createTime, createTime, true);
+        var graph = create(name, dataDir, destination, plugins, createTime, updateTime);
+        onLoad(graph, plugins);
+        graph.watchFile();
+        return graph;
     }
 
     private static Map<String, SnowGraphPluginInfo> createPlugins(List<SnowGraphPluginConfig> pluginConfigs) {
@@ -84,26 +96,12 @@ public class SnowGraphFactory {
     private static SnowGraph create(
         String name, String dataDir, String destination,
         Map<String, SnowGraphPluginInfo> plugins,
-        Date createTime, Date updateTime, boolean load
+        Date createTime, Date updateTime
     ) {
         preInit(plugins);
         init(plugins);
         postInit(plugins);
         var dependencyGraph = new DependencyGraph(plugins.values());
-        var snowGraph = new SnowGraph(name, dataDir, destination, dependencyGraph, createTime, updateTime);
-        if (load) onLoad(snowGraph, plugins);
-        if (!load) {
-            dependencyGraph.getSortedPlugins().forEach(plugin -> {
-                logger.info("{} started.", plugin.getInstance().getClass().getName());
-                long startTime = System.currentTimeMillis();
-                try (var context = new BasicSnowGraphContext(snowGraph, plugin, new BasicNeo4jService(snowGraph.getDatabaseBuilder().newGraphDatabase()))) {
-                    plugin.run(context);
-                }
-                long endTime = System.currentTimeMillis();
-                logger.info("{} uses {} s.", plugin.getClass().getName(), (endTime - startTime) / 1000);
-            });
-        }
-        snowGraph.watchFile();
-        return snowGraph;
+        return new SnowGraph(name, dataDir, destination, dependencyGraph, createTime, updateTime);
     }
 }
